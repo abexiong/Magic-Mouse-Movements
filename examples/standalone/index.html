@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Magic Mouse Movements</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background:#07090d; color:#f2f0e9; }
+      * { box-sizing:border-box; }
+      body { margin:0; background:radial-gradient(circle at 78% 2%,#102045 0,transparent 24%),#07090d; }
+      header, main { width:min(1180px,calc(100% - 40px)); margin:auto; }
+      header { padding:84px 0 54px; }
+      h1 { max-width:850px; margin:12px 0 18px; font-family:Georgia,serif; font-size:clamp(3.2rem,8vw,7rem); font-weight:400; line-height:.9; letter-spacing:-.06em; }
+      h2 { margin:0; font-family:Georgia,serif; font-size:2.3rem; font-weight:400; }
+      p { color:#aab1bd; line-height:1.7; }
+      .eyebrow, .meta { color:#8bb6ff; font-family:ui-monospace,monospace; font-size:.7rem; letter-spacing:.16em; text-transform:uppercase; }
+      .lead, .movement { overflow:hidden; border:1px solid rgba(255,255,255,.14); border-radius:14px; background:#0d1119; }
+      .lead-stage { position:relative; min-height:620px; }
+      .lead-copy { position:absolute; inset:auto 28px 28px; z-index:2; max-width:510px; padding:20px; border:1px solid rgba(255,255,255,.14); border-radius:10px; background:rgba(7,9,13,.8); backdrop-filter:blur(14px); }
+      .band-controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+      button { min-height:42px; padding:0 15px; border:1px solid rgba(255,255,255,.2); border-radius:5px; color:inherit; background:#111722; cursor:pointer; }
+      button:focus-visible { outline:2px solid #5793ff; outline-offset:3px; }
+      .catalog { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; padding:64px 0 110px; }
+      .movement { min-height:480px; }
+      .movement-copy { position:relative; z-index:2; padding:22px; pointer-events:none; }
+      .movement-stage { position:relative; min-height:380px; border-top:1px solid rgba(255,255,255,.12); background:radial-gradient(circle at 55% 45%,rgba(31,66,133,.3),transparent 45%),#090d14; }
+      #pathfinder .target { position:absolute; z-index:2; pointer-events:auto; }
+      #pathfinder .target:first-child { top:22%; left:14%; }
+      #pathfinder .target:last-child { right:13%; bottom:18%; }
+      #fusion [data-fusion-scatter] { position:absolute; z-index:2; top:30%; left:8%; max-width:360px; font-size:2.5rem; pointer-events:none; }
+      .list-fallback { padding:0 22px 22px; }
+      .list-fallback ul { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:0; list-style:none; }
+      .list-fallback button { width:100%; }
+      @media(max-width:760px) { .catalog{grid-template-columns:1fr}.lead-stage{min-height:560px}.list-fallback ul{grid-template-columns:1fr 1fr} }
+      @media(prefers-reduced-motion:reduce) { html{scroll-behavior:auto} }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">Free interactive cursor effects for websites</p>
+      <h1>Magic Mouse Movements</h1>
+      <p>Complete pointer controllers, rendering engines, neutral scenes, accessibility behavior, and integration examples.</p>
+    </header>
+    <main>
+      <section class="lead" aria-labelledby="passband-title">
+        <div class="lead-stage" id="passband">
+          <div class="lead-copy">
+            <p class="meta">Lead movement · WebGL2</p>
+            <h2 id="passband-title">Passband Lens</h2>
+            <p>Move to reveal the next sensing band. Tap or use the controls to change the base instrument.</p>
+            <div class="band-controls" aria-label="Select sensing band">
+              <button type="button" data-band="optical">Optical</button>
+              <button type="button" data-band="thermal">Thermal</button>
+              <button type="button" data-band="radar">Radar</button>
+              <button type="button" data-band="semantic">Semantic</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="catalog">
+        <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Storytelling</p><h2>Orbit Trail</h2></div><div class="movement-stage" id="orbit"></div></section>
+        <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Systems</p><h2>System Assembly</h2></div><div class="movement-stage" id="assembly"></div></section>
+        <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Graph</p><h2>Active Links</h2></div><div class="movement-stage" id="links"></div></section>
+        <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Navigation</p><h2>Pathfinder</h2></div><div class="movement-stage" id="pathfinder"><button class="target" data-path-target data-pathfinder-label="EVIDENCE / OPEN">Evidence</button><button class="target" data-path-target data-pathfinder-label="ACTION / NEXT">Next action</button></div></section>
+        <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Sensing</p><h2>Terrain Scanner</h2></div><div class="movement-stage" id="terrain"></div></section>
+        <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Reveal</p><h2>Layered Reveal</h2></div><div class="movement-stage" id="reveal"></div></section>
+        <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Particles</p><h2>Magnetic Ink</h2></div><div class="movement-stage" id="ink"></div></section>
+        <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Navigation</p><h2>Constellation Wand</h2></div><div class="movement-stage" id="constellation"></div><div class="list-fallback" id="constellation-list"></div></section>
+        <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Particles</p><h2>Fusion Field</h2></div><div class="movement-stage" id="fusion"><strong data-fusion-scatter>Move through the field.</strong></div></section>
+      </div>
+    </main>
+    <script type="module" src="/examples/standalone/main.js"></script>
+  </body>
+</html>

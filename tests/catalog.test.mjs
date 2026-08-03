@@ -1,0 +1,80 @@
+import assert from "node:assert/strict"
+import { readdir, readFile } from "node:fs/promises"
+import { test } from "node:test"
+import { movementCatalog } from "../dist/src/catalog.js"
+import * as publicApi from "../dist/src/index.js"
+
+const repositoryRoot = new URL("../", import.meta.url)
+
+test("catalog slugs and source folders are unique", () => {
+  const slugs = movementCatalog.map((movement) => movement.slug)
+  const paths = movementCatalog.map((movement) => movement.sourcePath)
+  assert.equal(new Set(slugs).size, slugs.length)
+  assert.equal(new Set(paths).size, paths.length)
+  assert.ok(slugs.includes("passband-lens"))
+})
+
+test("every initial movement exports a creator", () => {
+  const creators = [
+    "createPassbandLens",
+    "createOrbitTrail",
+    "createSystemAssembly",
+    "createActiveLinks",
+    "createPathfinder",
+    "createTerrainScanner",
+    "createLayeredReveal",
+    "createMagneticInk",
+    "createConstellationWand",
+    "createFusionField",
+  ]
+  for (const creator of creators) assert.equal(typeof publicApi[creator], "function", creator)
+})
+
+test("every catalog folder documents standalone HTML and React", async () => {
+  for (const movement of movementCatalog) {
+    const readmeUrl = new URL(`${movement.sourcePath}/README.md`, repositoryRoot)
+    const readme = await readFile(readmeUrl, "utf8")
+    assert.match(readme, /## Standalone HTML/)
+    assert.match(readme, /## React/)
+    assert.match(readme, /destroy\(\)/)
+  }
+})
+
+test("public source contains no private paths or em dashes", async () => {
+  const blocked = ["/Users/"]
+  const roots = [
+    "README.md",
+    "NOTICE.md",
+    "PROVENANCE.md",
+    "THIRD_PARTY_NOTICES.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "examples",
+    "scripts",
+    "src",
+    "kits",
+  ]
+
+  async function collect(relativePath) {
+    const url = new URL(relativePath, repositoryRoot)
+    const entries = await readdir(url, { withFileTypes: true })
+    const files = []
+    for (const entry of entries) {
+      const next = `${relativePath.replace(/\/$/, "")}/${entry.name}`
+      if (entry.isDirectory()) files.push(...await collect(`${next}/`))
+      else files.push(next)
+    }
+    return files
+  }
+
+  const files = []
+  for (const root of roots) {
+    if (root.includes(".")) files.push(root)
+    else files.push(...await collect(`${root}/`))
+  }
+  for (const file of files) {
+    const content = await readFile(new URL(file, repositoryRoot), "utf8")
+    for (const value of blocked) assert.equal(content.includes(value), false, `${file} contains ${value}`)
+    assert.equal(content.includes("—"), false, `${file} contains an em dash`)
+  }
+})

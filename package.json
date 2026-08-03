@@ -1,0 +1,92 @@
+{
+  "name": "magic-mouse-movements",
+  "version": "0.1.0",
+  "description": "Complete, accessible cursor interaction kits for websites.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Abraham Xiong",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abexiong/Magic-Mouse-Movements.git"
+  },
+  "homepage": "https://www.abrahamxiong.com/resources/magic-mouse-movements",
+  "files": [
+    "dist",
+    "kits/*/README.md",
+    "LICENSE",
+    "NOTICE.md",
+    "PROVENANCE.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./react": {
+      "types": "./dist/src/react/index.d.ts",
+      "import": "./dist/src/react/index.js"
+    },
+    "./orbit-trail": {
+      "types": "./dist/kits/orbit-trail/index.d.ts",
+      "import": "./dist/kits/orbit-trail/index.js"
+    },
+    "./system-assembly": {
+      "types": "./dist/kits/system-assembly/index.d.ts",
+      "import": "./dist/kits/system-assembly/index.js"
+    },
+    "./active-links": {
+      "types": "./dist/kits/active-links/index.d.ts",
+      "import": "./dist/kits/active-links/index.js"
+    },
+    "./pathfinder": {
+      "types": "./dist/kits/pathfinder/index.d.ts",
+      "import": "./dist/kits/pathfinder/index.js"
+    },
+    "./terrain-scanner": {
+      "types": "./dist/kits/terrain-scanner/index.d.ts",
+      "import": "./dist/kits/terrain-scanner/index.js"
+    },
+    "./passband-lens": {
+      "types": "./dist/kits/passband-lens/index.d.ts",
+      "import": "./dist/kits/passband-lens/index.js"
+    },
+    "./layered-reveal": {
+      "types": "./dist/kits/layered-reveal/index.d.ts",
+      "import": "./dist/kits/layered-reveal/index.js"
+    },
+    "./magnetic-ink": {
+      "types": "./dist/kits/magnetic-ink/index.d.ts",
+      "import": "./dist/kits/magnetic-ink/index.js"
+    },
+    "./constellation-wand": {
+      "types": "./dist/kits/constellation-wand/index.d.ts",
+      "import": "./dist/kits/constellation-wand/index.js"
+    },
+    "./fusion-field": {
+      "types": "./dist/kits/fusion-field/index.d.ts",
+      "import": "./dist/kits/fusion-field/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "demo": "npm run build && node scripts/serve.mjs",
+    "prepare": "npm run build",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "verify": "npm run check && npm test"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "react": "^19.2.6",
+    "typescript": "^5.9.3"
+  }
+}
