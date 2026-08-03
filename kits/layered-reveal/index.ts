@@ -6,90 +6,327 @@ export type LayeredRevealOptions = {
   accent?: string;
   brushRadius?: number;
   hideNativeCursor?: boolean;
-  renderBottom?: (context: CanvasRenderingContext2D, width: number, height: number) => void;
-  renderTop?: (context: CanvasRenderingContext2D, width: number, height: number) => void;
+  revealDuration?: number;
+  renderBottom?: (
+    context: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+  ) => void;
+  renderTop?: (
+    context: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+  ) => void;
+  videoPoster?: string;
+  videoSrc?: string;
 };
 
-type RevealPoint = Point & { life: number };
+type RevealPoint = Point & { life: number; radius: number };
 
-function defaultTop(context: CanvasRenderingContext2D, width: number, height: number) {
-  context.fillStyle = "#151a23";
+function headlineSize(width: number, height: number) {
+  return Math.max(42, Math.min(width * 0.14, height * 0.25, 116));
+}
+
+function defaultTop(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+) {
+  const paper = "#ffffff";
+  const ink = "#3d4852";
+  const blue = "#2d8cf0";
+  const uiFont = 'Arial, Helvetica, sans-serif';
+  const wordFont = '"Arial Black", Arial, Helvetica, sans-serif';
+
+  context.fillStyle = paper;
   context.fillRect(0, 0, width, height);
-  context.strokeStyle = "rgba(224, 230, 240, 0.12)";
+
+  const padding = Math.max(24, width * 0.05);
+  const navigationHeight = Math.min(74, height * 0.11);
+  context.fillStyle = paper;
+  context.fillRect(0, 0, width, navigationHeight);
+  context.strokeStyle = "#e6eaed";
   context.lineWidth = 1;
-  for (let x = 32; x < width; x += 64) {
-    context.beginPath();
-    context.moveTo(x, 0);
-    context.lineTo(x, height);
-    context.stroke();
+  context.beginPath();
+  context.moveTo(0, navigationHeight + 0.5);
+  context.lineTo(width, navigationHeight + 0.5);
+  context.stroke();
+
+  context.fillStyle = blue;
+  context.beginPath();
+  context.roundRect(padding, navigationHeight * 0.36, 18, 18, 4);
+  context.fill();
+  context.fillStyle = "#2f3d4a";
+  context.font = `600 15px ${uiFont}`;
+  context.textAlign = "left";
+  context.textBaseline = "alphabetic";
+  context.fillText("Your Website", padding + 28, navigationHeight * 0.36 + 15);
+
+  if (width > 680) {
+    const links = ["HOME", "ABOUT", "SERVICES", "TEAM", "BLOG", "CONTACT"];
+    context.fillStyle = "#8a97a3";
+    context.font = `600 10px ${uiFont}`;
+    context.textAlign = "right";
+    let x = width - padding;
+    for (let index = links.length - 1; index >= 0; index -= 1) {
+      const link = links[index];
+      if (!link) continue;
+      context.fillText(link, x, navigationHeight * 0.36 + 14);
+      x -= context.measureText(link).width + 24;
+    }
   }
-  for (let y = 32; y < height; y += 64) {
-    context.beginPath();
-    context.moveTo(0, y);
-    context.lineTo(width, y);
-    context.stroke();
+
+  const displayScale = Math.max(width / 16, height / 9);
+  const displayWidth = 16 * displayScale;
+  const displayHeight = 9 * displayScale;
+  const offsetX = (width - displayWidth) / 2;
+  const offsetY = (height - displayHeight) / 2;
+
+  const fitCap = (text: string, targetCap: number) => {
+    const probe = 200;
+    context.font = `900 ${probe}px ${wordFont}`;
+    const cap = context.measureText(text).actualBoundingBoxAscent || probe * 0.72;
+    let size = probe * (targetCap / cap);
+    context.font = `900 ${size}px ${wordFont}`;
+    const maxWidth = displayWidth * 0.9;
+    const measuredWidth = context.measureText(text).width;
+    if (measuredWidth > maxWidth) {
+      size *= maxWidth / measuredWidth;
+      context.font = `900 ${size}px ${wordFont}`;
+    }
+    return size;
+  };
+
+  context.save();
+  context.textAlign = "center";
+  context.textBaseline = "alphabetic";
+  context.fillStyle = ink;
+  fitCap("SOMETHING", displayHeight * 0.211);
+  const naturalWidth = context.measureText("SOMETHING").width;
+  const squeeze = (displayWidth * 0.759) / naturalWidth;
+  context.translate(offsetX + displayWidth * 0.5, offsetY + displayHeight * 0.481);
+  context.scale(squeeze, 1);
+  context.fillText("SOMETHING", 0, 0);
+  context.restore();
+
+  const oldSize = fitCap("OLD", displayHeight * 0.25);
+  context.textAlign = "center";
+  context.fillText(
+    "OLD",
+    offsetX + displayWidth * 0.5,
+    offsetY + displayHeight * 0.731,
+  );
+
+  const buttonWidth = Math.min(172, width * 0.2);
+  const buttonHeight = 42;
+  const buttonY = Math.min(
+    height - 142,
+    offsetY + displayHeight * 0.731 + oldSize * 0.48 + 26,
+  );
+  context.fillStyle = blue;
+  context.beginPath();
+  context.roundRect(
+    width / 2 - buttonWidth / 2,
+    buttonY,
+    buttonWidth,
+    buttonHeight,
+    buttonHeight / 2,
+  );
+  context.fill();
+  context.fillStyle = "#ffffff";
+  context.font = `600 11px ${uiFont}`;
+  context.fillText("LEARN MORE", width / 2, buttonY + 26);
+
+  if (height > 570) {
+    const titles = ["RETINA READY", "CROSS-BROWSER", "24/7 SUPPORT"];
+    const columnY = height - 74;
+    const columnWidth = Math.min(260, (width - padding * 2) / 3);
+    const startX = width / 2 - columnWidth;
+    for (let index = 0; index < titles.length; index += 1) {
+      const centerX = startX + columnWidth * index;
+      context.beginPath();
+      context.arc(centerX, columnY, 17, 0, Math.PI * 2);
+      context.strokeStyle = "#dfe5ea";
+      context.stroke();
+      context.fillStyle = "#5a6672";
+      context.font = `600 9px ${uiFont}`;
+      context.fillText(titles[index] ?? "FEATURE", centerX, columnY + 36);
+    }
   }
 }
 
-function defaultBottom(context: CanvasRenderingContext2D, width: number, height: number) {
-  const gradient = context.createRadialGradient(width * 0.65, height * 0.42, 20, width * 0.65, height * 0.42, width * 0.62);
-  gradient.addColorStop(0, "#5793ff");
-  gradient.addColorStop(0.42, "#173d87");
-  gradient.addColorStop(1, "#07111f");
-  context.fillStyle = gradient;
+function defaultBottom(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+) {
+  context.fillStyle = "#07100d";
   context.fillRect(0, 0, width, height);
-  context.strokeStyle = "rgba(220, 235, 255, 0.48)";
-  for (let lineIndex = 0; lineIndex < 14; lineIndex += 1) {
+
+  const atmosphere = context.createRadialGradient(
+    width * 0.62,
+    height * 0.42,
+    0,
+    width * 0.62,
+    height * 0.42,
+    Math.max(width, height) * 0.72,
+  );
+  atmosphere.addColorStop(0, "rgba(137, 255, 94, 0.34)");
+  atmosphere.addColorStop(0.34, "rgba(67, 120, 255, 0.18)");
+  atmosphere.addColorStop(0.72, "rgba(18, 45, 36, 0.16)");
+  atmosphere.addColorStop(1, "rgba(7, 16, 13, 0)");
+  context.fillStyle = atmosphere;
+  context.fillRect(0, 0, width, height);
+
+  context.save();
+  context.globalCompositeOperation = "screen";
+  for (let lineIndex = 0; lineIndex < 22; lineIndex += 1) {
     context.beginPath();
-    for (let x = 0; x <= width; x += 12) {
-      const y = height * (0.18 + lineIndex * 0.048) + Math.sin(x * 0.018 + lineIndex * 0.6) * 18;
-      if (x === 0) context.moveTo(x, y);
+    for (let x = -12; x <= width + 12; x += 9) {
+      const y =
+        height * (0.08 + lineIndex * 0.043) +
+        Math.sin(x * 0.021 + lineIndex * 0.72) * (10 + lineIndex * 0.5) +
+        Math.sin(x * 0.007 - lineIndex * 0.3) * 18;
+      if (x === -12) context.moveTo(x, y);
       else context.lineTo(x, y);
     }
+    context.strokeStyle = `rgba(${lineIndex % 3 === 0 ? "145, 255, 109" : "123, 170, 255"}, ${lineIndex % 4 === 0 ? 0.34 : 0.16})`;
+    context.lineWidth = lineIndex % 4 === 0 ? 1.05 : 0.65;
     context.stroke();
   }
+  context.restore();
+
+  const size = headlineSize(width, height);
+  const chrome = context.createLinearGradient(
+    0,
+    height * 0.5 - size,
+    0,
+    height * 0.5 + size,
+  );
+  chrome.addColorStop(0, "#f4fff2");
+  chrome.addColorStop(0.22, "#8dff69");
+  chrome.addColorStop(0.48, "#335dff");
+  chrome.addColorStop(0.7, "#f1efff");
+  chrome.addColorStop(1, "#5dde91");
+
+  context.save();
+  context.translate(width * 0.5, height * 0.5);
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.font = `800 ${size}px Arial, Helvetica, sans-serif`;
+  context.lineJoin = "round";
+  context.shadowColor = "rgba(124, 255, 89, 0.44)";
+  context.shadowBlur = 26;
+  context.strokeStyle = "rgba(236, 255, 240, 0.72)";
+  context.lineWidth = Math.max(2, size * 0.045);
+  context.strokeText("SOMETHING", 0, -size * 0.48);
+  context.strokeText("NEW", 0, size * 0.5);
+  context.shadowBlur = 0;
+  context.fillStyle = chrome;
+  context.fillText("SOMETHING", 0, -size * 0.48);
+  context.fillText("NEW", 0, size * 0.5);
+  context.restore();
 }
 
 export function createLayeredReveal(
   container: HTMLElement,
   options: LayeredRevealOptions = {},
 ): MovementInstance {
-  const trail: RevealPoint[] = [];
-  const brushRadius = options.brushRadius ?? 78;
+  const revealed: RevealPoint[] = [];
+  const brushRadius = options.brushRadius ?? 82;
+  const revealDuration = Math.max(600, options.revealDuration ?? 4_000);
 
-  return createCanvasMovement(
+  const movement = createCanvasMovement(
     container,
     {
       render(frame) {
-        const { context, width, height, pointer, delta } = frame;
+        const { context, width, height, pointer } = frame;
+        if (!frame.policy.staticFallback && frame.delta > 0) {
+          for (const point of revealed) point.life -= frame.delta;
+          while (revealed.length > 0 && revealed[0]!.life <= 0) revealed.shift();
+        }
         clear(context, width, height);
         (options.renderTop ?? defaultTop)(context, width, height);
 
-        const last = trail[trail.length - 1];
-        if (!last || distance(last, pointer) > 12) trail.push({ x: pointer.x, y: pointer.y, life: 1 });
-        if (trail.length > 38) trail.shift();
-        for (const point of trail) point.life = Math.max(0, point.life - delta / 2100);
-        while (trail[0] && trail[0].life <= 0) trail.shift();
+        const radius = brushRadius + Math.min(pointer.speed / 32, 30);
+        const last = revealed[revealed.length - 1];
+        if (
+          pointer.active &&
+          (!last ||
+            distance(
+              { x: last.x * width, y: last.y * height },
+              pointer,
+            ) >
+              radius * 0.2)
+        ) {
+          revealed.push({
+            x: pointer.x / width,
+            y: pointer.y / height,
+            life: revealDuration,
+            radius: radius / Math.min(width, height),
+          });
+          if (revealed.length > 1_200) revealed.shift();
+        } else if (pointer.active && last) {
+          last.life = revealDuration;
+        }
 
         context.save();
         context.beginPath();
         if (frame.policy.staticFallback) {
-          context.rect(width * 0.5, 0, width * 0.5, height);
+          context.moveTo(width * 0.46, 0);
+          context.lineTo(width, 0);
+          context.lineTo(width, height);
+          context.lineTo(width * 0.6, height);
+          context.closePath();
         } else {
-          for (const point of trail) {
-            context.moveTo(point.x + brushRadius * point.life, point.y);
-            context.arc(point.x, point.y, brushRadius * (0.65 + point.life * 0.35), 0, Math.PI * 2);
+          const scale = Math.min(width, height);
+          const fadeWindow = Math.min(1_200, revealDuration * 0.4);
+          for (const point of revealed) {
+            const fadeProgress = Math.min(1, point.life / fadeWindow);
+            const easedFade = fadeProgress * fadeProgress * (3 - 2 * fadeProgress);
+            const pointRadius = point.radius * scale * easedFade;
+            context.moveTo(point.x * width + pointRadius, point.y * height);
+            context.arc(
+              point.x * width,
+              point.y * height,
+              pointRadius,
+              0,
+              Math.PI * 2,
+            );
           }
         }
-        context.clip();
-        (options.renderBottom ?? defaultBottom)(context, width, height);
+        if (options.videoSrc) {
+          context.globalCompositeOperation = "destination-out";
+          context.fillStyle = "#000000";
+          context.fill();
+        } else {
+          context.clip();
+          (options.renderBottom ?? defaultBottom)(context, width, height);
+        }
         context.restore();
 
-        if (!frame.policy.staticFallback) {
+        if (!frame.policy.staticFallback && pointer.active) {
+          const halo = context.createRadialGradient(
+            pointer.x,
+            pointer.y,
+            radius * 0.62,
+            pointer.x,
+            pointer.y,
+            radius * 1.08,
+          );
+          halo.addColorStop(0, "rgba(124, 255, 89, 0)");
+          halo.addColorStop(0.74, "rgba(124, 255, 89, 0.08)");
+          halo.addColorStop(1, "rgba(124, 255, 89, 0)");
+          context.fillStyle = halo;
           context.beginPath();
-          context.arc(pointer.x, pointer.y, brushRadius, 0, Math.PI * 2);
-          context.strokeStyle = options.accent ?? "rgba(168, 196, 255, 0.62)";
-          context.lineWidth = 1;
+          context.arc(pointer.x, pointer.y, radius * 1.08, 0, Math.PI * 2);
+          context.fill();
+
+          context.beginPath();
+          context.arc(pointer.x, pointer.y, radius, 0, Math.PI * 2);
+          context.strokeStyle =
+            options.accent ?? "rgba(124, 255, 89, 0.68)";
+          context.lineWidth = 1.15;
           context.stroke();
         }
       },
@@ -99,4 +336,51 @@ export function createLayeredReveal(
       renderOnCoarsePointer: true,
     },
   );
+
+  if (!options.videoSrc) return movement;
+
+  const video = document.createElement("video");
+  video.src = options.videoSrc;
+  if (options.videoPoster) video.poster = options.videoPoster;
+  video.autoplay = true;
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = "metadata";
+  video.setAttribute("aria-hidden", "true");
+  Object.assign(video.style, {
+    height: "100%",
+    inset: "0",
+    objectFit: "cover",
+    pointerEvents: "none",
+    position: "absolute",
+    width: "100%",
+  });
+  container.prepend(video);
+
+  const prefersStaticMedia =
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    Boolean(
+      (navigator as Navigator & { connection?: { saveData?: boolean } })
+        .connection?.saveData,
+    );
+
+  return {
+    ...movement,
+    start() {
+      movement.start();
+      if (!prefersStaticMedia) void video.play().catch(() => undefined);
+    },
+    pause() {
+      movement.pause();
+      video.pause();
+    },
+    destroy() {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      video.remove();
+      movement.destroy();
+    },
+  };
 }

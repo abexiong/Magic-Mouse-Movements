@@ -13,6 +13,7 @@
   "files": [
     "dist",
     "kits/*/README.md",
+    "kits/*/demo/*",
     "LICENSE",
     "NOTICE.md",
     "PROVENANCE.md",

@@ -54,7 +54,7 @@ export const movementCatalog = [
   {
     slug: "terrain-scanner",
     name: "Terrain Scanner",
-    summary: "A procedural terrain field is revealed through contours, points, scan fronts, and acquisition states.",
+    summary: "A comet-like scanner moves across a website surface and briefly reveals procedural terrain beneath it.",
     technology: "Canvas 2D",
     categories: ["data visualization", "sensing"],
     capabilities: ["desktop", "touch", "reduced motion", "static fallback"],
@@ -64,7 +64,7 @@ export const movementCatalog = [
   {
     slug: "layered-reveal",
     name: "Layered Reveal",
-    summary: "A moving brush reveals a replaceable visual layer beneath the first.",
+    summary: "A moving brush erases a Something Old website layer to uncover a looping Something New film.",
     technology: "Canvas 2D",
     categories: ["reveal", "storytelling"],
     capabilities: ["desktop", "touch", "reduced motion", "static fallback"],

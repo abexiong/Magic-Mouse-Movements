@@ -64,15 +64,15 @@ Run the complete local gallery with `npm run demo`.
 
 | Movement | Technology | Primary behavior |
 |---|---|---|
-| Passband Lens | WebGL2 | Inspect one terrain through optical, thermal, radar, and semantic bands |
+| Passband Lens | WebGL2 | Inspect one terrain while optical, thermal, radar, and semantic bands rotate |
 | Orbit Trail | Canvas 2D | Follow a chapter-aware path with orbit telemetry |
 | System Assembly | Canvas 2D | Assemble segments around the pointer and nearby domains |
 | Active Links | Canvas 2D | Connect the pointer to nearby registered nodes |
 | Pathfinder | Canvas 2D | Route orthogonally toward the nearest target |
-| Terrain Scanner | Canvas 2D | Reveal procedural contours, points, and scan fronts |
-| Layered Reveal | Canvas 2D | Reveal a second visual layer through a moving brush |
+| Terrain Scanner | Canvas 2D | Scan a website surface with a shrinking comet trail that reveals terrain beneath it |
+| Layered Reveal | Canvas 2D | Erase Something Old to uncover Abraham Xiong's looping Something New film |
 | Magnetic Ink | Canvas 2D | Attract particles, write on press, and scatter on reversal |
-| Constellation Wand | Canvas 2D | Bend a graph, highlight paths, and select destinations |
+| Constellation Wand | Canvas 2D | Bend a dense graph, highlight paths, and select destinations |
 | Fusion Field | Canvas 2D | Move through a binary vortex with a comet trail and velocity response |
 
 ## Lifecycle

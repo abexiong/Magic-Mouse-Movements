@@ -5,9 +5,9 @@ Magic Mouse Movements is an independently implemented collection of reusable cur
 ## Release boundary
 
 - Public source is newly authored for this repository.
-- Demonstration scenes and procedural assets are neutral and replaceable.
+- Demonstration scenes and procedural assets are neutral and replaceable, except for the authorized first-party Layered Reveal media described below.
 - No private client or prospect identity is included.
-- No source code, shader text, selectors, media, or copy from reference websites is included.
+- No third-party source code, shader text, selectors, media, or copy from reference websites is included.
 - Every future movement must add a catalog manifest, documentation, tests, and a provenance review before release.
 
 ## Initial movement concepts
@@ -17,5 +17,7 @@ The first catalog includes Orbit Trail, System Assembly, Active Links, Pathfinde
 ## Visual assets
 
 The files under `docs/images/` were generated for this repository with OpenAI's built-in image-generation workflow on August 2, 2026. They used text-only project briefs and no reference images, private assets, company logos, or third-party media.
+
+The Layered Reveal kit is an authorized first-party contribution from Abraham Xiong's AgenSEO demonstration. Abraham owns the work and explicitly approved distributing its generic Something Old renderer, `something-new-loop.mp4`, `something-new-poster.jpg`, and `layered-reveal-replay.mp4` with the free kit on August 2, 2026. The reusable kit removes AgenSEO identity and product copy while preserving the original visual use case.
 
 The visuals are conceptual project artwork. The interactive engines under `kits/` and the standalone gallery remain the source of truth for actual behavior.

@@ -4,6 +4,7 @@ import type { MovementInstance } from "../../src/core/types.js";
 export type PassbandName = "optical" | "thermal" | "radar" | "semantic";
 
 export type PassbandLensOptions = {
+  autoCycleMs?: false | number;
   band?: PassbandName;
   hideNativeCursor?: boolean;
   lensRadius?: number;
@@ -232,6 +233,7 @@ export function createPassbandLens(
   let visible = true;
   let destroyed = false;
   let frameId = 0;
+  let cycleTimer = 0;
   let currentBand = options.band ?? "optical";
   let pointerX = 0;
   let pointerY = 0;
@@ -289,6 +291,24 @@ export function createPassbandLens(
     currentBand = BANDS[nextIndex] ?? "optical";
     options.onBandChange?.(currentBand);
   };
+  const advanceBand = () => {
+    const nextIndex = (bandIndex(currentBand) + 1) % BANDS.length;
+    currentBand = BANDS[nextIndex] ?? "optical";
+    options.onBandChange?.(currentBand);
+    schedule();
+  };
+  const stopAutoCycle = () => {
+    if (cycleTimer) window.clearInterval(cycleTimer);
+    cycleTimer = 0;
+  };
+  const startAutoCycle = () => {
+    stopAutoCycle();
+    if (options.autoCycleMs === false || options.autoCycleMs === undefined) return;
+    cycleTimer = window.setInterval(
+      advanceBand,
+      Math.max(1_000, options.autoCycleMs),
+    );
+  };
   const onVisibility = () => {
     if (document.hidden && frameId) {
       cancelAnimationFrame(frameId);
@@ -316,10 +336,12 @@ export function createPassbandLens(
   return {
     start() {
       requested = true;
+      startAutoCycle();
       schedule();
     },
     pause() {
       requested = false;
+      stopAutoCycle();
       if (frameId) cancelAnimationFrame(frameId);
       frameId = 0;
       container.style.cursor = "";
@@ -334,6 +356,7 @@ export function createPassbandLens(
     destroy() {
       destroyed = true;
       requested = false;
+      stopAutoCycle();
       if (frameId) cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
