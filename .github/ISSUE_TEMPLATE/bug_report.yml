@@ -1,0 +1,67 @@
+name: Bug report
+description: Report a reproducible problem with a movement, demo, or integration.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for helping improve Magic Mouse Movements. Do not use this form for security vulnerabilities.
+  - type: dropdown
+    id: movement
+    attributes:
+      label: Affected movement
+      options:
+        - Passband Lens
+        - Orbit Trail
+        - System Assembly
+        - Active Links
+        - Pathfinder
+        - Terrain Scanner
+        - Layered Reveal
+        - Magnetic Ink
+        - Constellation Wand
+        - Fusion Field
+        - Shared core or multiple movements
+        - Documentation or gallery
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest reliable sequence that reproduces the problem.
+      placeholder: |
+        1. Load...
+        2. Move or select...
+        3. Observe...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and environment
+      description: Include browser version, operating system, input type, and framework if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add screenshots, recordings, console output, or a minimal reproduction link.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing issues for the same problem.
+          required: true
+        - label: This report does not disclose a security vulnerability or private information.
+          required: true
