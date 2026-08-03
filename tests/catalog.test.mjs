@@ -149,7 +149,7 @@ test("Passband Lens can auto-cycle and Constellation Wand ships a dense graph", 
   assert.match(passband, /float scopeIndex = mod\(floor\(uBand \+ 0\.5\), 4\.0\)/)
   assert.match(passband, /uniform float uOpticalZoom/)
   assert.match(passband, /\(fragmentPixel - uLens\.xy\) \/ max\(1\.0, uOpticalZoom\)/)
-  assert.match(passband, /options\.opticalZoom \?\? 1\.38/)
+  assert.match(passband, /Math\.min\(4, Math\.max\(1, options\.opticalZoom \?\? 2\.76\)\)/)
   assert.doesNotMatch(passband, /scopeBlend/)
   assert.doesNotMatch(passband, /bandTarget/)
   assert.match(passband, /band = bandIndex\(nextBand\)/)

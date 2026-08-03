@@ -539,7 +539,7 @@ export function createPassbandLens(
     gl.uniform1f(uniforms.lensOn, lensOn);
     gl.uniform1f(
       uniforms.opticalZoom,
-      Math.min(2.5, Math.max(1, options.opticalZoom ?? 1.38)),
+      Math.min(4, Math.max(1, options.opticalZoom ?? 2.76)),
     );
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     frameId = requestAnimationFrame(render);
