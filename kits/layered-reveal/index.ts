@@ -233,8 +233,8 @@ export function createLayeredReveal(
   options: LayeredRevealOptions = {},
 ): MovementInstance {
   const revealed: RevealPoint[] = [];
-  const brushRadius = options.brushRadius ?? 82;
-  const revealDuration = Math.max(600, options.revealDuration ?? 4_000);
+  let lastPointerSample: Point | null = null;
+  const revealDuration = Math.max(600, options.revealDuration ?? 2_600);
 
   const movement = createCanvasMovement(
     container,
@@ -245,29 +245,31 @@ export function createLayeredReveal(
           for (const point of revealed) point.life -= frame.delta;
           while (revealed.length > 0 && revealed[0]!.life <= 0) revealed.shift();
         }
+        frame.canvas.dataset.revealPoints = String(revealed.length);
+        frame.canvas.dataset.oldestRevealLife = String(
+          Math.max(0, Math.round(revealed[0]?.life ?? 0)),
+        );
         clear(context, width, height);
         (options.renderTop ?? defaultTop)(context, width, height);
 
-        const radius = brushRadius + Math.min(pointer.speed / 32, 30);
-        const last = revealed[revealed.length - 1];
-        if (
-          pointer.active &&
-          (!last ||
-            distance(
-              { x: last.x * width, y: last.y * height },
-              pointer,
-            ) >
-              radius * 0.2)
-        ) {
-          revealed.push({
-            x: pointer.x / width,
-            y: pointer.y / height,
-            life: revealDuration,
-            radius: radius / Math.min(width, height),
-          });
-          if (revealed.length > 1_200) revealed.shift();
-        } else if (pointer.active && last) {
-          last.life = revealDuration;
+        const radius =
+          options.brushRadius ?? Math.min(width, height) * 0.13;
+        if (!pointer.active) lastPointerSample = null;
+        const previous = lastPointerSample;
+        const travel = previous ? distance(previous, pointer) : 0;
+        if (pointer.active && (!previous || travel > 9)) {
+          const steps = previous ? Math.min(20, Math.max(1, Math.ceil(travel / 9))) : 1;
+          for (let step = 1; step <= steps; step += 1) {
+            const progress = step / steps;
+            revealed.push({
+              x: (previous ? previous.x + (pointer.x - previous.x) * progress : pointer.x) / width,
+              y: (previous ? previous.y + (pointer.y - previous.y) * progress : pointer.y) / height,
+              life: revealDuration,
+              radius: radius / Math.min(width, height),
+            });
+          }
+          while (revealed.length > 420) revealed.shift();
+          lastPointerSample = { x: pointer.x, y: pointer.y };
         }
 
         context.save();
@@ -339,10 +341,16 @@ export function createLayeredReveal(
 
   if (!options.videoSrc) return movement;
 
+  const prefersStaticMedia =
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    Boolean(
+      (navigator as Navigator & { connection?: { saveData?: boolean } })
+        .connection?.saveData,
+    );
   const video = document.createElement("video");
   video.src = options.videoSrc;
   if (options.videoPoster) video.poster = options.videoPoster;
-  video.autoplay = true;
+  video.autoplay = !prefersStaticMedia;
   video.loop = true;
   video.muted = true;
   video.playsInline = true;
@@ -357,13 +365,6 @@ export function createLayeredReveal(
     width: "100%",
   });
   container.prepend(video);
-
-  const prefersStaticMedia =
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-    Boolean(
-      (navigator as Navigator & { connection?: { saveData?: boolean } })
-        .connection?.saveData,
-    );
 
   return {
     ...movement,

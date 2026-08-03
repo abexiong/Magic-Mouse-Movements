@@ -34,6 +34,8 @@ const DEFAULT_NODES: readonly ConstellationNode[] = [
   { id: "connect", label: "Connect", detail: "Link the network", x: 0.62, y: 0.74 },
   { id: "adapt", label: "Adapt", detail: "Respond to evidence", x: 0.78, y: 0.84 },
   { id: "archive", label: "Archive", detail: "Preserve the learning", x: 0.18, y: 0.84 },
+  { id: "map", label: "Map", detail: "See the whole field", x: 0.41, y: 0.18 },
+  { id: "release", label: "Release", detail: "Share the result", x: 0.91, y: 0.23 },
 ];
 
 const DEFAULT_EDGES: readonly ConstellationEdge[] = [
@@ -66,7 +68,16 @@ const DEFAULT_EDGES: readonly ConstellationEdge[] = [
   ["connect", "ship"],
   ["connect", "adapt"],
   ["adapt", "ship"],
+  ["map", "systems"],
+  ["map", "explore"],
+  ["observe", "release"],
+  ["release", "launch"],
 ];
+
+const hash = (seed: number) => {
+  const value = Math.sin(seed * 92.173 + 14.71) * 43758.5453;
+  return value - Math.floor(value);
+};
 
 export function createConstellationWand(
   container: HTMLElement,
@@ -77,6 +88,10 @@ export function createConstellationWand(
   const accent = options.accent ?? "rgba(91, 153, 255, 0.96)";
   let currentPositions = new Map<string, Point>();
   let nearestId: string | null = null;
+  let selectedId: string | null = null;
+  const smoothedPointer = { x: 0, y: 0 };
+  let pointerActivity = 0;
+  let initialized = false;
 
   const list = options.listContainer ? document.createElement("ul") : null;
   if (list && options.listContainer) {
@@ -85,8 +100,12 @@ export function createConstellationWand(
       const item = document.createElement("li");
       const button = document.createElement("button");
       button.type = "button";
-      button.textContent = node.detail ? `${node.label}: ${node.detail}` : node.label;
-      button.addEventListener("click", () => options.onSelect?.(node));
+      button.textContent = node.label;
+      if (node.detail) button.setAttribute("aria-label", `${node.label}: ${node.detail}`);
+      button.addEventListener("click", () => {
+        selectedId = node.id;
+        options.onSelect?.(node);
+      });
       item.append(button);
       list.append(item);
     }
@@ -100,7 +119,10 @@ export function createConstellationWand(
     const point = currentPositions.get(nearestId);
     if (!point || distance(pointer, point) > 42) return;
     const node = nodes.find((candidate) => candidate.id === nearestId);
-    if (node) options.onSelect?.(node);
+    if (node) {
+      selectedId = node.id;
+      options.onSelect?.(node);
+    }
   };
   container.addEventListener("pointerup", onClick);
 
@@ -110,34 +132,96 @@ export function createConstellationWand(
       render(frame) {
         const { context, width, height, pointer, time } = frame;
         clear(context, width, height);
+        if (!initialized) {
+          smoothedPointer.x = pointer.x || width * 0.49;
+          smoothedPointer.y = pointer.y || height * 0.47;
+          initialized = true;
+        }
+        smoothedPointer.x = mix(smoothedPointer.x, pointer.x, 0.095);
+        smoothedPointer.y = mix(smoothedPointer.y, pointer.y, 0.095);
+        pointerActivity = mix(
+          pointerActivity,
+          pointer.active && !frame.policy.staticFallback ? 1 : 0,
+          0.06,
+        );
+
+        const pointerGlow = context.createRadialGradient(
+          smoothedPointer.x,
+          smoothedPointer.y,
+          0,
+          smoothedPointer.x,
+          smoothedPointer.y,
+          300,
+        );
+        pointerGlow.addColorStop(0, `rgba(53, 108, 225, ${0.39 * pointerActivity})`);
+        pointerGlow.addColorStop(0.45, `rgba(32, 73, 164, ${0.165 * pointerActivity})`);
+        pointerGlow.addColorStop(1, "rgba(22, 51, 116, 0)");
+        context.fillStyle = pointerGlow;
+        context.fillRect(smoothedPointer.x - 300, smoothedPointer.y - 300, 600, 600);
+
+        const dustCount = width < 680 ? 150 : 280;
+        for (let index = 0; index < dustCount; index += 1) {
+          const homeX = hash(index * 4.71) * width;
+          const homeY = hash(index * 8.37 + 9) * height;
+          const deltaX = smoothedPointer.x - homeX;
+          const deltaY = smoothedPointer.y - homeY;
+          const pointerDistance = Math.max(1, Math.hypot(deltaX, deltaY));
+          const energy = clamp(1 - pointerDistance / 250, 0, 1) * pointerActivity;
+          const drift = energy * (11 + hash(index * 3.2) * 18);
+          const x = homeX - (deltaX / pointerDistance) * drift + Math.sin(time * 0.00018 + index) * 1.4;
+          const y = homeY - (deltaY / pointerDistance) * drift + Math.cos(time * 0.00015 + index * 1.7) * 1.4;
+          const twinkle = 0.62 + Math.sin(time * 0.0012 + index * 2.3) * 0.38;
+          const alpha = 0.08 + hash(index * 6.9) * 0.28 + energy * 0.56;
+          const radius = 0.35 + hash(index * 11.2) * 1.05 + energy * 1.45;
+          dot(context, { x, y }, radius, `rgba(166, 190, 235, ${alpha * twinkle})`);
+        }
+
         const positions = new Map<string, Point>();
         for (const node of nodes) {
           const home = { x: node.x <= 1 ? node.x * width : node.x, y: node.y <= 1 ? node.y * height : node.y };
-          const deltaX = home.x - pointer.x;
-          const deltaY = home.y - pointer.y;
-          const dist = Math.max(1, Math.hypot(deltaX, deltaY));
-          const bend = frame.policy.staticFallback ? 0 : clamp(1 - dist / 240, 0, 1) * 26;
-          positions.set(node.id, {
-            x: home.x + (deltaX / dist) * bend,
-            y: home.y + (deltaY / dist) * bend,
-          });
+          positions.set(node.id, home);
         }
         currentPositions = positions;
         nearestId = nodes
-          .map((node) => ({ id: node.id, distance: distance(pointer, positions.get(node.id) ?? pointer) }))
+          .map((node) => ({ id: node.id, distance: distance(smoothedPointer, positions.get(node.id) ?? smoothedPointer) }))
           .sort((a, b) => a.distance - b.distance)[0]?.id ?? null;
 
         for (const [fromId, toId] of edges) {
           const from = positions.get(fromId);
           const to = positions.get(toId);
           if (!from || !to) continue;
-          const highlighted = fromId === nearestId || toId === nearestId;
-          line(context, from, to, highlighted ? "rgba(91, 153, 255, 0.62)" : "rgba(168, 196, 255, 0.18)", highlighted ? 1.2 : 0.8);
-          if (highlighted) {
-            const pulse = (time * 0.00034) % 1;
-            dot(context, { x: mix(from.x, to.x, pulse), y: mix(from.y, to.y, pulse) }, 1.6, accent);
+          const middleX = (from.x + to.x) * 0.5;
+          const middleY = (from.y + to.y) * 0.5;
+          const pointerDistance = Math.hypot(smoothedPointer.x - middleX, smoothedPointer.y - middleY);
+          const warp = clamp(1 - pointerDistance / 330, 0, 1) * pointerActivity;
+          const highlighted = fromId === nearestId || toId === nearestId || fromId === selectedId || toId === selectedId;
+          context.beginPath();
+          context.moveTo(from.x, from.y);
+          context.quadraticCurveTo(
+            middleX + (smoothedPointer.x - middleX) * warp * 0.28,
+            middleY + (smoothedPointer.y - middleY) * warp * 0.28,
+            to.x,
+            to.y,
+          );
+          context.strokeStyle = highlighted
+            ? "rgba(112, 160, 248, 0.5)"
+            : `rgba(112, 160, 248, ${0.075 + warp * 0.14})`;
+          context.lineWidth = 1;
+          context.stroke();
+        }
+
+        if (pointerActivity > 0.04) {
+          const nearest = nodes
+            .map((node) => ({ node, point: positions.get(node.id)! }))
+            .sort((a, b) => distance(smoothedPointer, a.point) - distance(smoothedPointer, b.point))
+            .slice(0, 3);
+          for (const { point } of nearest) {
+            const nodeDistance = distance(smoothedPointer, point);
+            const alpha = clamp(1 - nodeDistance / 420, 0, 1) * 0.2 * pointerActivity;
+            line(context, smoothedPointer, point, `rgba(135, 177, 255, ${alpha})`, 1);
           }
         }
+
         for (const node of nodes) {
           const point = positions.get(node.id);
           if (!point) continue;
@@ -150,10 +234,24 @@ export function createConstellationWand(
           }
           dot(context, point, active ? 3.6 : 2.2, active ? "rgba(244, 248, 255, 0.98)" : accent);
         }
+        if (selectedId) {
+          const selectedPoint = positions.get(selectedId);
+          if (selectedPoint) {
+            const pulse = (time * 0.055) % 54;
+            context.beginPath();
+            context.arc(selectedPoint.x, selectedPoint.y, 18 + pulse, 0, Math.PI * 2);
+            context.strokeStyle = `rgba(127, 173, 255, ${0.34 * (1 - pulse / 54)})`;
+            context.stroke();
+          }
+        }
         if (!frame.policy.staticFallback) {
           context.beginPath();
           context.arc(pointer.x, pointer.y, 10, 0, Math.PI * 2);
           context.strokeStyle = "rgba(220, 233, 255, 0.82)";
+          context.stroke();
+          context.beginPath();
+          context.arc(pointer.x, pointer.y, 5.5, time * 0.004, time * 0.004 + Math.PI * 1.42);
+          context.strokeStyle = "rgba(91, 153, 255, 0.72)";
           context.stroke();
           dot(context, pointer, 1.8, "rgba(244, 248, 255, 0.98)");
         }

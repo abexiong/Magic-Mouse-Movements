@@ -1,7 +1,7 @@
 # Notice
 
-Magic Mouse Movements contains newly authored interaction kits released under the MIT License.
+Magic Mouse Movements contains newly authored interaction kits and explicitly authorized first-party adaptations released under the MIT License.
 
-The project was informed by generalized pointer-interaction behaviors observed in public demonstrations and by an internal behavior inventory. It does not include source text, shader text, selectors, private project data, client assets, brand assets, or copy from the inspected reference implementations.
+The project preserves interaction logic from Abraham Xiong's explicitly authorized first-party implementations. It does not include private project data, credentials, unpublished personal material, unauthorized client assets, or brand copy from those source projects.
 
-Each movement kit uses new source structure and reusable rendering logic. Layered Reveal is an explicit first-party exception to the otherwise neutral demonstration boundary. Abraham Xiong created and contributed its Something Old renderer, Something New film, poster, and demonstration replay for distribution with the free kit. Their provenance is recorded in `PROVENANCE.md`.
+Each movement kit uses a reusable public source structure, neutral identity, accessibility behavior, lifecycle cleanup, examples, documentation, and tests. Abraham Xiong authorized inclusion and distribution of the first-party engines and owned media needed to reproduce all ten original use cases. Their provenance is recorded in `PROVENANCE.md`.

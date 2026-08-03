@@ -24,6 +24,34 @@ function interactiveTarget(target: EventTarget | null) {
     : false;
 }
 
+function nativeCursorTarget(target: EventTarget | null) {
+  return target instanceof Element
+    ? Boolean(target.closest([
+        "a",
+        "button",
+        "input",
+        "textarea",
+        "select",
+        "label",
+        "summary",
+        "[role='button']",
+        "[role='link']",
+        "[contenteditable='true']",
+        "[data-cursor-native]",
+        "p",
+        "blockquote",
+        "code",
+        "pre",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+      ].join(",")))
+    : false;
+}
+
 export function createCanvasMovement(
   container: HTMLElement,
   renderer: CanvasMovementRenderer,
@@ -121,7 +149,15 @@ export function createCanvasMovement(
     pointer.x = nextX;
     pointer.y = nextY;
     pointer.pointerType = event.pointerType || "mouse";
-    pointer.active = !interactiveTarget(event.target);
+    const nativeCursor = nativeCursorTarget(event.target);
+    pointer.active = !nativeCursor;
+    if (
+      options.hideNativeCursor &&
+      !policy.staticFallback &&
+      pointer.pointerType === "mouse"
+    ) {
+      container.style.cursor = nativeCursor ? "" : "none";
+    }
     lastPointerTime = now;
     lastPointerX = nextX;
     lastPointerY = nextY;
@@ -131,10 +167,7 @@ export function createCanvasMovement(
   const onPointerMove = (event: PointerEvent) => updatePointer(event);
   const onPointerEnter = (event: PointerEvent) => {
     updatePointer(event);
-    pointer.active = !interactiveTarget(event.target);
-    if (options.hideNativeCursor && !policy.staticFallback && pointer.pointerType === "mouse") {
-      container.style.cursor = "none";
-    }
+    pointer.active = !nativeCursorTarget(event.target);
   };
   const onPointerLeave = () => {
     pointer.active = false;

@@ -4,7 +4,7 @@ export const movementCatalog = [
   {
     slug: "passband-lens",
     name: "Passband Lens",
-    summary: "Inspect one procedural terrain plate through optical, thermal, radar, and semantic bands.",
+    summary: "Keep one photoreal terrain plate optical while the movable lens scans registered optical, thermal, radar, and semantic bands.",
     technology: "WebGL2",
     categories: ["data visualization", "sensing", "storytelling"],
     capabilities: ["desktop", "touch", "reduced motion", "static fallback"],
@@ -54,7 +54,7 @@ export const movementCatalog = [
   {
     slug: "terrain-scanner",
     name: "Terrain Scanner",
-    summary: "A comet-like scanner moves across a website surface and briefly reveals procedural terrain beneath it.",
+    summary: "A transparent radar scanner overlays procedural terrain contours while the website stays readable beneath it.",
     technology: "Canvas 2D",
     categories: ["data visualization", "sensing"],
     capabilities: ["desktop", "touch", "reduced motion", "static fallback"],
@@ -84,7 +84,7 @@ export const movementCatalog = [
   {
     slug: "constellation-wand",
     name: "Constellation Wand",
-    summary: "The pointer bends a graph, highlights paths, and selects neutral destinations.",
+    summary: "The pointer warps a dense star graph, lights nearby paths, and selects neutral destinations.",
     technology: "Canvas 2D",
     categories: ["navigation", "data visualization"],
     capabilities: ["desktop", "touch", "keyboard", "list fallback"],
@@ -94,7 +94,7 @@ export const movementCatalog = [
   {
     slug: "fusion-field",
     name: "Fusion Field",
-    summary: "A comet cursor moves through a binary vortex and scatters digits according to speed.",
+    summary: "A halo and comet trail displace binary digits and scatter text around a responsive fusion vortex.",
     technology: "Canvas 2D",
     categories: ["particles", "decorative cursor", "storytelling"],
     capabilities: ["desktop", "reduced motion", "static fallback"],

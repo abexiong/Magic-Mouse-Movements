@@ -28,9 +28,9 @@ Magic Mouse Movements is a growing catalog of complete, customizable interaction
 
 ### Passband Lens
 
-The lead movement renders one terrain field through optical, thermal, radar, and semantic bands. Moving through the field reveals the next sensing band inside the lens.
+The lead movement keeps one photoreal aerial terrain plate optical while the movable lens rotates through registered optical, thermal, radar, and semantic instruments.
 
-![Passband Lens revealing a thermal terrain layer beneath an optical topographic field](./docs/images/passband-lens-feature.png)
+![Passband Lens previewing a thermal instrument inside an optical view of a photoreal aerial test range](./docs/images/passband-lens-feature.png)
 
 ### A catalog designed to grow
 
@@ -38,7 +38,7 @@ The current kits explore trails, assembly, active links, pathfinding, scanning, 
 
 ![A visual gallery of cursor trails, linked nodes, pathfinding, terrain scanning, layered reveals, magnetic particles, constellations, and a binary vortex](./docs/images/movement-gallery.png)
 
-These images are conceptual previews. Run the standalone gallery to interact with the real rendering engines.
+The Passband image is a browser capture of the live engine. The overview and gallery are conceptual previews. Run the standalone gallery to interact with every rendering engine.
 
 ## Install
 
@@ -49,9 +49,14 @@ npm install github:abexiong/Magic-Mouse-Movements
 Import the full catalog or one movement directly:
 
 ```ts
-import { createPassbandLens } from "magic-mouse-movements/passband-lens"
+import {
+  createPassbandLens,
+  PASSBAND_DEMO_IMAGE,
+} from "magic-mouse-movements/passband-lens"
 
-const movement = createPassbandLens(document.querySelector("[data-passband]"))
+const movement = createPassbandLens(document.querySelector("[data-passband]"), {
+  imageSrc: PASSBAND_DEMO_IMAGE,
+})
 movement.start()
 
 // Restore the native cursor and release all resources when the scene unmounts.
@@ -64,12 +69,12 @@ Run the complete local gallery with `npm run demo`.
 
 | Movement | Technology | Primary behavior |
 |---|---|---|
-| Passband Lens | WebGL2 | Inspect one terrain while optical, thermal, radar, and semantic bands rotate |
+| Passband Lens | WebGL2 | Keep one terrain optical while its movable scope rotates through registered sensing bands |
 | Orbit Trail | Canvas 2D | Follow a chapter-aware path with orbit telemetry |
 | System Assembly | Canvas 2D | Assemble segments around the pointer and nearby domains |
 | Active Links | Canvas 2D | Connect the pointer to nearby registered nodes |
 | Pathfinder | Canvas 2D | Route orthogonally toward the nearest target |
-| Terrain Scanner | Canvas 2D | Scan a website surface with a shrinking comet trail that reveals terrain beneath it |
+| Terrain Scanner | Canvas 2D | Scan a website surface with a transparent radar trail, terrain contours, and a soft 1.4-second decay |
 | Layered Reveal | Canvas 2D | Erase Something Old to uncover Abraham Xiong's looping Something New film |
 | Magnetic Ink | Canvas 2D | Attract particles, write on press, and scatter on reversal |
 | Constellation Wand | Canvas 2D | Bend a dense graph, highlight paths, and select destinations |

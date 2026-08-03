@@ -1,5 +1,5 @@
 import { createCanvasMovement } from "../../src/core/canvas-movement.js";
-import { clear, distance, dot, label, line, mix } from "../../src/core/drawing.js";
+import { clear, clamp, distance, dot, label, line, mix } from "../../src/core/drawing.js";
 import type { MovementInstance, Point } from "../../src/core/types.js";
 
 export type PathfinderTarget = Point & {
@@ -25,7 +25,8 @@ export function createPathfinder(
   container: HTMLElement,
   options: PathfinderOptions = {},
 ): MovementInstance {
-  const accent = options.accent ?? "rgba(91, 153, 255, 0.96)";
+  const accent = options.accent ?? "rgba(151, 193, 255, 0.92)";
+  const fast = { x: 0, y: 0 };
   const slow = { x: 0, y: 0 };
   let initialized = false;
 
@@ -36,12 +37,16 @@ export function createPathfinder(
         const { context, width, height, pointer } = frame;
         clear(context, width, height);
         if (!initialized) {
-          slow.x = pointer.x || width / 2;
-          slow.y = pointer.y || height / 2;
+          fast.x = slow.x = pointer.x || width / 2;
+          fast.y = slow.y = pointer.y || height / 2;
           initialized = true;
         }
-        slow.x = mix(slow.x, pointer.x, frame.policy.staticFallback ? 1 : 0.12);
-        slow.y = mix(slow.y, pointer.y, frame.policy.staticFallback ? 1 : 0.12);
+        const seconds = Math.max(0.001, frame.delta / 1000);
+        const ease = (duration: number) => frame.policy.staticFallback ? 1 : 1 - Math.exp(-seconds / duration);
+        fast.x = mix(fast.x, pointer.x, ease(0.045));
+        fast.y = mix(fast.y, pointer.y, ease(0.045));
+        slow.x = mix(slow.x, pointer.x, ease(0.3));
+        slow.y = mix(slow.y, pointer.y, ease(0.3));
 
         const bounds = container.getBoundingClientRect();
         const domTargets = options.targetSelector
@@ -51,6 +56,12 @@ export function createPathfinder(
                 x: rect.left - bounds.left + rect.width / 2,
                 y: rect.top - bounds.top + rect.height / 2,
                 label: element.dataset.pathfinderLabel ?? `TARGET / ${String(index + 1).padStart(2, "0")}`,
+                rect: {
+                  left: rect.left - bounds.left,
+                  right: rect.right - bounds.left,
+                  top: rect.top - bounds.top,
+                  bottom: rect.bottom - bounds.top,
+                },
               };
             })
           : [];
@@ -72,10 +83,56 @@ export function createPathfinder(
           line(context, slow, elbow, "rgba(194, 214, 255, 0.3)", 1);
           line(context, elbow, target, "rgba(91, 153, 255, 0.72)", 1.2);
           dot(context, elbow, 1.8, accent);
+          const targetRect = "rect" in target && target.rect
+            ? target.rect
+            : { left: target.x - 22, right: target.x + 22, top: target.y - 16, bottom: target.y + 16 };
+          const left = clamp(targetRect.left - 5, 2, width - 2);
+          const right = clamp(targetRect.right + 5, 2, width - 2);
+          const top = clamp(targetRect.top - 5, 2, height - 2);
+          const bottom = clamp(targetRect.bottom + 5, 2, height - 2);
+          const size = Math.min(14, Math.max(6, (right - left) * 0.08));
+          const corners = [
+            [[left + size, top], [left, top], [left, top + size]],
+            [[right - size, top], [right, top], [right, top + size]],
+            [[right, bottom - size], [right, bottom], [right - size, bottom]],
+            [[left + size, bottom], [left, bottom], [left, bottom - size]],
+          ];
+          for (const corner of corners) {
+            const first = corner[0];
+            const middle = corner[1];
+            const last = corner[2];
+            if (!first || !middle || !last) continue;
+            context.beginPath();
+            context.moveTo(first[0] ?? 0, first[1] ?? 0);
+            context.lineTo(middle[0] ?? 0, middle[1] ?? 0);
+            context.lineTo(last[0] ?? 0, last[1] ?? 0);
+            context.strokeStyle = "rgba(104, 157, 255, 0.34)";
+            context.lineWidth = 1;
+            context.stroke();
+          }
         }
-        dot(context, pointer, 2.6, "rgba(244, 248, 255, 0.96)");
         if (pointer.active && !frame.policy.staticFallback) {
-          label(context, pointer, target?.label ?? "ROUTE / READY");
+          const size = 10;
+          const cursorCorners = [
+            [[fast.x - size, fast.y - 4], [fast.x - size, fast.y - size], [fast.x - 4, fast.y - size]],
+            [[fast.x + 4, fast.y - size], [fast.x + size, fast.y - size], [fast.x + size, fast.y - 4]],
+            [[fast.x + size, fast.y + 4], [fast.x + size, fast.y + size], [fast.x + 4, fast.y + size]],
+            [[fast.x - 4, fast.y + size], [fast.x - size, fast.y + size], [fast.x - size, fast.y + 4]],
+          ];
+          for (const corner of cursorCorners) {
+            const first = corner[0];
+            const middle = corner[1];
+            const last = corner[2];
+            if (!first || !middle || !last) continue;
+            context.beginPath();
+            context.moveTo(first[0] ?? 0, first[1] ?? 0);
+            context.lineTo(middle[0] ?? 0, middle[1] ?? 0);
+            context.lineTo(last[0] ?? 0, last[1] ?? 0);
+            context.strokeStyle = "rgba(247, 249, 253, 0.94)";
+            context.stroke();
+          }
+          dot(context, fast, 1.7, accent);
+          label(context, fast, target?.label ?? "ROUTE / READY");
         }
       },
     },

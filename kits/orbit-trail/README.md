@@ -12,9 +12,11 @@ Orbit Trail turns horizontal journey progress into an expanding orbital pointer 
     chapters: ["DISCOVER", "DESIGN", "BUILD", "TEST", "SHIP"],
   })
   orbit.start()
-  window.addEventListener("pagehide", () => orbit.destroy(), { once: true })
+window.addEventListener("pagehide", () => orbit.destroy(), { once: true })
 </script>
 ```
+
+Use `nodeSelector` to register live DOM landmarks and `stageIndex` to connect the five measurement states to scroll or application state. Coordinate nodes and pointer-driven staging remain available for self-contained demonstrations.
 
 ## React
 

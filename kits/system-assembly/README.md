@@ -12,9 +12,11 @@ System Assembly builds configurable technical segments around the pointer and hi
     domains: ["INPUT", "MODEL", "MOTION", "ACCESS", "OUTPUT"],
   })
   assembly.start()
-  window.addEventListener("pagehide", () => assembly.destroy(), { once: true })
+window.addEventListener("pagehide", () => assembly.destroy(), { once: true })
 </script>
 ```
+
+Use `targetSelector` to register live capability elements and `activeIndex` to connect selection to scroll, hover, or application state. Coordinate nodes and pointer-driven selection remain available for self-contained demonstrations.
 
 ## React
 

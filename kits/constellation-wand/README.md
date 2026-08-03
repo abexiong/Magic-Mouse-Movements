@@ -1,6 +1,6 @@
 # Constellation Wand
 
-Constellation Wand bends a configurable 14-node graph, highlights nearby paths, selects destinations, and can generate an accessible list companion. The expanded default mesh uses large canvases while custom nodes and edges remain fully supported.
+Constellation Wand bends a configurable 16-node graph, highlights nearby paths, selects destinations, and can generate an accessible list companion. The expanded default mesh uses large canvases while custom nodes and edges remain fully supported.
 
 ## Standalone HTML
 

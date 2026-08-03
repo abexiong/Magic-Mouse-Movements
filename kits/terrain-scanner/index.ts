@@ -1,6 +1,10 @@
 import { createCanvasMovement } from "../../src/core/canvas-movement.js";
-import { clear, distance, seededRandom } from "../../src/core/drawing.js";
-import type { MovementInstance, Point } from "../../src/core/types.js";
+import { clear, seededRandom } from "../../src/core/drawing.js";
+import type {
+  CanvasFrame,
+  MovementInstance,
+  Point,
+} from "../../src/core/types.js";
 
 export type TerrainScannerOptions = {
   accent?: string;
@@ -18,7 +22,68 @@ export type TerrainScannerOptions = {
   terrainColor?: string;
 };
 
-type ScanPoint = Point & { distance: number; life: number; radius: number };
+type RadarSample = Point & {
+  angle: number;
+  breakBefore: boolean;
+  intensity: number;
+  speed: number;
+  time: number;
+};
+
+type RadarPalette = {
+  contours: [string, string, string];
+  fill: [string, string, string];
+  grid: string;
+  points: [string, string, string];
+  scan: [string, string, string];
+};
+
+const REFERENCE_TRAIL_LIFETIME = 1_400;
+const MAX_SAMPLES = 78;
+const REFERENCE_HALO_RADIUS = 70.8;
+
+const fieldPoints = [
+  [0.46, 0.14],
+  [0.67, 0.22],
+  [0.24, 0.31],
+  [0.81, 0.36],
+  [0.53, 0.44],
+  [0.14, 0.51],
+  [0.72, 0.57],
+  [0.38, 0.63],
+  [0.86, 0.69],
+  [0.21, 0.76],
+  [0.57, 0.82],
+  [0.16, 0.18],
+  [0.91, 0.48],
+  [0.76, 0.88],
+] as const;
+
+function createPalette(accent: string): RadarPalette {
+  return {
+    contours: [
+      `rgba(${accent}, 0.98)`,
+      "rgba(0, 0, 82, 0.94)",
+      "rgba(74, 104, 207, 0.86)",
+    ],
+    fill: [
+      `rgba(${accent}, 0.1)`,
+      "rgba(0, 0, 82, 0.075)",
+      "rgba(74, 104, 207, 0.065)",
+    ],
+    grid: `rgba(${accent}, 0.27)`,
+    points: [
+      `rgba(${accent}, 1)`,
+      "rgba(0, 0, 82, 1)",
+      "rgba(74, 104, 207, 0.94)",
+    ],
+    scan: [
+      "rgba(0, 0, 82, 1)",
+      `rgba(${accent}, 1)`,
+      "rgba(74, 104, 207, 0.94)",
+    ],
+  };
+}
 
 function drawWebsiteSurface(
   context: CanvasRenderingContext2D,
@@ -87,17 +152,6 @@ function drawWebsiteSurface(
     heroTop + titleSize * 2 + 68,
   );
 
-  context.fillStyle = "#e6ebf1";
-  context.beginPath();
-  context.roundRect(
-    padding + copyWidth + contentWidth * 0.06,
-    heroTop,
-    contentWidth - copyWidth - contentWidth * 0.06,
-    heroHeight,
-    8,
-  );
-  context.fill();
-
   const imageLeft = padding + copyWidth + contentWidth * 0.06;
   const imageWidth = contentWidth - copyWidth - contentWidth * 0.06;
   const imageGradient = context.createLinearGradient(
@@ -120,7 +174,8 @@ function drawWebsiteSurface(
     context.beginPath();
     for (let x = imageLeft; x <= imageLeft + imageWidth; x += 12) {
       const y =
-        heroTop + heroHeight * (0.12 + lineIndex * 0.095) +
+        heroTop +
+        heroHeight * (0.12 + lineIndex * 0.095) +
         Math.sin(x * 0.026 + lineIndex * 0.72) * 8;
       if (x === imageLeft) context.moveTo(x, y);
       else context.lineTo(x, y);
@@ -158,151 +213,437 @@ function drawWebsiteSurface(
   }
 }
 
+function configureCanvas(
+  canvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  pixelRatio: number,
+) {
+  canvas.width = Math.max(1, Math.round(width * pixelRatio));
+  canvas.height = Math.max(1, Math.round(height * pixelRatio));
+}
+
+function drawTerrainTexture(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  pixelRatio: number,
+  palette: RadarPalette,
+  contourCount: number,
+  pointCount: number,
+) {
+  const random = seededRandom(20260802);
+  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  context.clearRect(0, 0, width, height);
+
+  for (let ridge = 0; ridge < 5; ridge += 1) {
+    const baseline = height * (0.24 + ridge * 0.16);
+    const phase = ridge * 1.37;
+    context.beginPath();
+    context.moveTo(-80, height + 40);
+    for (let x = -80; x <= width + 80; x += 18) {
+      const broadWave = Math.sin(x * 0.0047 + phase) * (58 + ridge * 9);
+      const middleWave = Math.sin(x * 0.0105 + phase * 1.8) * (22 + ridge * 3);
+      const fineWave = Math.sin(x * 0.026 + phase * 0.7) * 6;
+      const ridgeLift =
+        Math.exp(
+          -Math.pow(
+            (x - width * (0.18 + ridge * 0.17)) / (width * 0.18),
+            2,
+          ),
+        ) *
+        (48 + ridge * 11);
+      context.lineTo(
+        x,
+        baseline + broadWave + middleWave + fineWave - ridgeLift,
+      );
+    }
+    context.lineTo(width + 80, height + 40);
+    context.closePath();
+    context.fillStyle = palette.fill[ridge % palette.fill.length] ?? palette.fill[0];
+    context.fill();
+  }
+
+  context.lineWidth = 0.8;
+  for (let band = 0; band < contourCount; band += 1) {
+    const baseline = (height * (band + 0.8)) / contourCount;
+    const phase = band * 0.46;
+    context.beginPath();
+    for (let x = -30; x <= width + 30; x += 14) {
+      const broadWave = Math.sin(x * 0.0052 + phase) * 28;
+      const middleWave = Math.sin(x * 0.013 + phase * 1.6) * 11;
+      const ridge =
+        Math.exp(
+          -Math.pow(
+            (x - width * (0.24 + (band % 5) * 0.13)) / (width * 0.17),
+            2,
+          ),
+        ) *
+        (18 + (band % 4) * 6);
+      const y = baseline + broadWave + middleWave - ridge;
+      if (x === -30) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    }
+    context.strokeStyle =
+      palette.contours[band % palette.contours.length] ?? palette.contours[0];
+    context.globalAlpha = band % 4 === 0 ? 0.92 : 0.62;
+    context.setLineDash(band % 5 === 0 ? [3, 5] : []);
+    context.stroke();
+  }
+
+  context.setLineDash([]);
+  context.globalAlpha = 1;
+  context.lineWidth = 0.55;
+  context.strokeStyle = palette.grid;
+  for (let x = 70; x < width; x += 132) {
+    context.beginPath();
+    context.moveTo(x, 0);
+    context.lineTo(x, height);
+    context.stroke();
+  }
+  for (let y = 90; y < height; y += 126) {
+    context.beginPath();
+    context.moveTo(0, y);
+    context.lineTo(width, y);
+    context.stroke();
+  }
+
+  for (let point = 0; point < pointCount; point += 1) {
+    const x = random() * width;
+    const y = random() * height;
+    const pointRadius = point % 9 === 0 ? 1.2 : 0.72;
+    context.beginPath();
+    context.arc(x, y, pointRadius, 0, Math.PI * 2);
+    context.fillStyle =
+      palette.points[point % palette.points.length] ?? palette.points[0];
+    context.globalAlpha = 0.46 + random() * 0.48;
+    context.fill();
+  }
+  context.globalAlpha = 1;
+}
+
+function drawMask(
+  context: CanvasRenderingContext2D,
+  samples: RadarSample[],
+  now: number,
+  width: number,
+  height: number,
+  pixelRatio: number,
+  lifetime: number,
+  radiusScale: number,
+) {
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  context.lineCap = "round";
+  context.lineJoin = "round";
+
+  for (let index = 0; index < samples.length; index += 1) {
+    const sample = samples[index];
+    if (!sample) continue;
+    const previousSample = samples[index - 1];
+    const age = now - sample.time;
+    const life = Math.max(0, 1 - age / lifetime);
+    const easedLife = life * life;
+    const scanWidth =
+      (114 + Math.min(sample.speed, 2.4) * 78) *
+      (0.76 + life * 0.24) *
+      radiusScale;
+    const alpha = easedLife * sample.intensity;
+    const isSegment =
+      previousSample &&
+      !sample.breakBefore &&
+      now - previousSample.time < lifetime;
+
+    const drawStroke = (lineWidth: number, strokeAlpha: number) => {
+      context.beginPath();
+      if (isSegment) {
+        context.moveTo(previousSample.x, previousSample.y);
+        context.lineTo(sample.x, sample.y);
+      } else {
+        context.moveTo(sample.x - 0.01, sample.y);
+        context.lineTo(sample.x + 0.01, sample.y);
+      }
+      context.lineWidth = lineWidth;
+      context.strokeStyle = `rgba(255, 255, 255, ${strokeAlpha})`;
+      context.stroke();
+    };
+
+    drawStroke(scanWidth * 1.85, alpha * 0.24);
+    drawStroke(scanWidth, alpha);
+    drawStroke(Math.max(18, scanWidth * 0.3), alpha * 0.552);
+  }
+
+  const latest = samples[samples.length - 1];
+  if (!latest) return;
+  const latestLife = Math.max(0, 1 - (now - latest.time) / lifetime);
+  const radius =
+    (138 + Math.min(latest.speed, 2.4) * 54) * radiusScale;
+  const gradient = context.createRadialGradient(
+    latest.x,
+    latest.y,
+    3,
+    latest.x,
+    latest.y,
+    radius,
+  );
+  gradient.addColorStop(
+    0,
+    `rgba(255, 255, 255, ${latestLife * latest.intensity})`,
+  );
+  gradient.addColorStop(
+    0.5,
+    `rgba(255, 255, 255, ${latestLife * latest.intensity * 0.432})`,
+  );
+  gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, width, height);
+}
+
+function drawScanFront(
+  context: CanvasRenderingContext2D,
+  sample: RadarSample,
+  now: number,
+  palette: RadarPalette,
+  radiusScale: number,
+) {
+  const age = now - sample.time;
+  if (age > 170 || sample.intensity < 0.3) return;
+  const life = 1 - age / 170;
+  const scanWidth =
+    (144 + Math.min(sample.speed, 2.4) * 84) * radiusScale;
+  const scanLength =
+    (62 + Math.min(sample.speed, 2.4) * 42) * radiusScale;
+  const scanAlpha = life * sample.intensity;
+
+  context.save();
+  context.translate(sample.x, sample.y);
+  context.rotate(sample.angle);
+
+  const fieldGradient = context.createLinearGradient(-scanLength, 0, 10, 0);
+  fieldGradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+  fieldGradient.addColorStop(0.5, palette.scan[0]);
+  fieldGradient.addColorStop(0.82, palette.scan[2]);
+  fieldGradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+  context.globalAlpha = scanAlpha * 0.13;
+  context.fillStyle = fieldGradient;
+  context.beginPath();
+  context.moveTo(-scanLength, -scanWidth * 0.68);
+  context.lineTo(8, -scanWidth * 0.42);
+  context.lineTo(8, scanWidth * 0.42);
+  context.lineTo(-scanLength, scanWidth * 0.68);
+  context.closePath();
+  context.fill();
+
+  const edgeGradient = context.createLinearGradient(
+    0,
+    -scanWidth / 2,
+    0,
+    scanWidth / 2,
+  );
+  edgeGradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+  edgeGradient.addColorStop(0.22, palette.scan[0]);
+  edgeGradient.addColorStop(0.5, palette.scan[1]);
+  edgeGradient.addColorStop(0.78, palette.scan[2]);
+  edgeGradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+  context.globalAlpha = scanAlpha;
+  context.strokeStyle = edgeGradient;
+  context.lineWidth = 1.15;
+  context.beginPath();
+  context.moveTo(0, -scanWidth / 2);
+  context.lineTo(0, scanWidth / 2);
+  context.stroke();
+
+  for (let point = 0; point < 7; point += 1) {
+    const pointOffset = point - 3;
+    const pointX = -12 - ((point * 17) % Math.max(20, scanLength - 8));
+    const pointY = pointOffset * (scanWidth / 7.5);
+    context.beginPath();
+    context.arc(pointX, pointY, point % 3 === 0 ? 1.15 : 0.75, 0, Math.PI * 2);
+    context.fillStyle = palette.points[point % palette.points.length] ?? palette.points[0];
+    context.globalAlpha = scanAlpha * (0.4 + (point % 2) * 0.22);
+    context.fill();
+  }
+  context.restore();
+  context.globalAlpha = 1;
+}
+
+function drawCursor(
+  frame: CanvasFrame,
+  halo: Point,
+  palette: RadarPalette,
+  accent: string,
+) {
+  const { context, pointer, time } = frame;
+  if (!pointer.active) return;
+  const radius = REFERENCE_HALO_RADIUS * 1.16;
+
+  context.save();
+  context.translate(halo.x, halo.y);
+  context.strokeStyle = `rgba(${accent}, 0.92)`;
+  context.lineWidth = 1;
+  context.beginPath();
+  context.arc(0, 0, radius, 0, Math.PI * 2);
+  context.stroke();
+  context.strokeStyle = "rgba(0, 0, 82, 0.18)";
+  context.beginPath();
+  context.arc(0, 0, radius + 1, 0, Math.PI * 2);
+  context.stroke();
+
+  context.strokeStyle = `rgba(${accent}, 0.74)`;
+  context.beginPath();
+  context.moveTo(-radius - 10, 0);
+  context.lineTo(-radius - 3, 0);
+  context.moveTo(radius + 3, 0);
+  context.lineTo(radius + 10, 0);
+  context.moveTo(0, -radius - 8);
+  context.lineTo(0, -radius - 2);
+  context.stroke();
+
+  context.save();
+  context.beginPath();
+  context.arc(0, 0, radius - 4, 0, Math.PI * 2);
+  context.clip();
+  context.globalAlpha = 0.82;
+  context.strokeStyle = `rgba(${accent}, 0.68)`;
+  context.lineWidth = 0.7;
+  context.setLineDash([2, 2.75]);
+  for (let line = 0; line < 3; line += 1) {
+    context.beginPath();
+    for (let x = -radius; x <= radius; x += 6) {
+      const y = radius * (0.18 + line * 0.22) + Math.sin(x * 0.055 + line) * 10;
+      if (x === -radius) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    }
+    context.stroke();
+  }
+  context.setLineDash([]);
+  context.fillStyle = palette.points[0];
+  for (const [pointX, pointY] of fieldPoints) {
+    context.beginPath();
+    context.arc(
+      (pointX - 0.5) * radius * 2,
+      (pointY - 0.5) * radius * 2,
+      1,
+      0,
+      Math.PI * 2,
+    );
+    context.fill();
+  }
+
+  const sweepProgress = (time % 700) / 700;
+  const sweepAngle = (-40 + sweepProgress * 340) * (Math.PI / 180);
+  const sweepAlpha = Math.sin(sweepProgress * Math.PI) * 0.84;
+  context.globalAlpha = Math.max(0, sweepAlpha);
+  context.rotate(sweepAngle);
+  context.strokeStyle = palette.scan[1];
+  context.beginPath();
+  context.moveTo(0, 0);
+  context.lineTo(radius, 0);
+  context.stroke();
+  context.restore();
+  context.restore();
+
+  context.save();
+  context.beginPath();
+  context.arc(pointer.x, pointer.y, 3.36, 0, Math.PI * 2);
+  context.fillStyle = `rgba(${accent}, 1)`;
+  context.fill();
+  context.strokeStyle = "rgba(0, 0, 82, 0.72)";
+  context.lineWidth = 1;
+  context.stroke();
+  context.restore();
+}
+
 export function createTerrainScanner(
   container: HTMLElement,
   options: TerrainScannerOptions = {},
 ): MovementInstance {
-  const accent = options.accent ?? "42, 103, 210";
-  const contourCount = options.contourCount ?? 28;
-  const revealDuration = Math.max(900, options.revealDuration ?? 3_000);
-  const revealRadius = options.revealRadius ?? 96;
-  const surfaceColor = options.surfaceColor ?? "#f5f6f2";
-  const terrainColor = options.terrainColor ?? "#0a1930";
-  const random = seededRandom(81427);
-  const samples: Point[] = Array.from(
-    { length: options.pointCount ?? 210 },
-    () => ({ x: random(), y: random() }),
+  const accent = options.accent ?? "23, 61, 184";
+  const palette = createPalette(accent);
+  const contourCount = options.contourCount ?? 32;
+  const pointCount = options.pointCount ?? 260;
+  const revealDuration = Math.max(
+    400,
+    options.revealDuration ?? REFERENCE_TRAIL_LIFETIME,
   );
-  const revealed: ScanPoint[] = [];
-  const terrainCanvas = document.createElement("canvas");
-  const terrainContext = terrainCanvas.getContext("2d");
-  let terrainCacheKey = "";
-  let trailDistance = 0;
-  let lastInputPosition: Point | null = null;
+  const radiusScale = Math.max(0.5, (options.revealRadius ?? 138) / 138);
+  const surfaceColor = options.surfaceColor ?? "#f5f6f2";
+  const samples: RadarSample[] = [];
+  const maskCanvas = document.createElement("canvas");
+  const textureCanvas = document.createElement("canvas");
+  const overlayCanvas = document.createElement("canvas");
+  const maskContext = maskCanvas.getContext("2d");
+  const textureContext = textureCanvas.getContext("2d");
+  const overlayContext = overlayCanvas.getContext("2d");
+  let cacheKey = "";
+  let lastPointerPosition: Point | null = null;
+  let lastAngle = 0;
+  const halo: Point = { x: 0, y: 0 };
+  let haloReady = false;
 
-  const addTrailPoint = (
-    x: number,
-    y: number,
-    radius: number,
-    width: number,
-    height: number,
-    pathDistance: number,
-    life = revealDuration,
-  ) => {
-    revealed.push({
-      x: x / width,
-      y: y / height,
-      distance: pathDistance,
-      life,
-      radius: radius / Math.min(width, height),
-    });
-  };
-
-  const drawTerrain = (
-    context: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-  ) => {
-    context.fillStyle = terrainColor;
-    context.fillRect(0, 0, width, height);
-
-    const glow = context.createRadialGradient(
-      width * 0.63,
-      height * 0.42,
-      0,
-      width * 0.63,
-      height * 0.42,
-      Math.max(width, height) * 0.72,
-    );
-    glow.addColorStop(0, `rgba(${accent}, 0.34)`);
-    glow.addColorStop(0.48, `rgba(${accent}, 0.11)`);
-    glow.addColorStop(1, "rgba(4, 12, 25, 0)");
-    context.fillStyle = glow;
-    context.fillRect(0, 0, width, height);
-
-    for (let band = 0; band < contourCount; band += 1) {
-      const baseline = ((band + 0.7) / contourCount) * height;
-      const phase = band * 0.48;
-      context.beginPath();
-      for (let x = -20; x <= width + 20; x += 10) {
-        const broad = Math.sin(x * 0.007 + phase) * 25;
-        const middle = Math.sin(x * 0.019 + phase * 1.4) * 10;
-        const ridge =
-          Math.exp(
-            -Math.pow(
-              (x - width * (0.2 + (band % 5) * 0.14)) / (width * 0.18),
-              2,
-            ),
-          ) * 24;
-        const y = baseline + broad + middle - ridge;
-        if (x === -20) context.moveTo(x, y);
-        else context.lineTo(x, y);
-      }
-      context.strokeStyle = `rgba(171, 207, 255, ${band % 4 === 0 ? 0.86 : 0.48})`;
-      context.lineWidth = band % 4 === 0 ? 1.15 : 0.7;
-      context.setLineDash(band % 6 === 0 ? [3, 5] : []);
-      context.stroke();
-    }
-    context.setLineDash([]);
-
-    for (let index = 0; index < samples.length; index += 1) {
-      const sample = samples[index];
-      if (!sample) continue;
-      context.beginPath();
-      context.arc(
-        sample.x * width,
-        sample.y * height,
-        index % 11 === 0 ? 1.5 : 0.75,
-        0,
-        Math.PI * 2,
+  const ensureBuffers = (frame: CanvasFrame) => {
+    const { width, height, pixelRatio } = frame;
+    const nextKey = `${Math.round(width)}:${Math.round(height)}:${pixelRatio.toFixed(3)}:${contourCount}:${pointCount}`;
+    if (nextKey === cacheKey) return;
+    cacheKey = nextKey;
+    configureCanvas(maskCanvas, width, height, pixelRatio);
+    configureCanvas(textureCanvas, width, height, pixelRatio);
+    configureCanvas(overlayCanvas, width, height, pixelRatio);
+    if (textureContext) {
+      drawTerrainTexture(
+        textureContext,
+        width,
+        height,
+        pixelRatio,
+        palette,
+        contourCount,
+        pointCount,
       );
-      context.fillStyle = `rgba(${accent}, ${index % 3 === 0 ? 0.92 : 0.58})`;
-      context.fill();
     }
   };
 
-  const drawCachedTerrain = (
-    context: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    pixelRatio: number,
-  ) => {
-    if (!terrainContext) {
-      drawTerrain(context, width, height);
+  const addPointerSample = (frame: CanvasFrame) => {
+    const { pointer, time } = frame;
+    if (!pointer.active) return;
+    const previousPosition = lastPointerPosition;
+    const travel = previousPosition
+      ? Math.hypot(pointer.x - previousPosition.x, pointer.y - previousPosition.y)
+      : Number.POSITIVE_INFINITY;
+    if (previousPosition && travel <= 0.5) return;
+    if (previousPosition && travel > 0.5) {
+      lastAngle = Math.atan2(
+        pointer.y - previousPosition.y,
+        pointer.x - previousPosition.x,
+      );
+    }
+    const previousSample = samples[samples.length - 1];
+    if (previousSample && travel < 2.5 && time - previousSample.time < 28) {
       return;
     }
-
-    const cacheKey = `${Math.round(width)}:${Math.round(height)}:${pixelRatio.toFixed(3)}`;
-    if (cacheKey !== terrainCacheKey) {
-      terrainCacheKey = cacheKey;
-      terrainCanvas.width = Math.max(1, Math.round(width * pixelRatio));
-      terrainCanvas.height = Math.max(1, Math.round(height * pixelRatio));
-      terrainContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      drawTerrain(terrainContext, width, height);
+    samples.push({
+      x: pointer.x,
+      y: pointer.y,
+      time,
+      speed: previousPosition ? Math.min(pointer.speed / 1_000, 2.4) : 0,
+      angle: lastAngle,
+      intensity: 1,
+      breakBefore:
+        !previousSample ||
+        time - previousSample.time > 155 ||
+        travel > 260,
+    });
+    if (samples.length > MAX_SAMPLES) {
+      samples.splice(0, samples.length - MAX_SAMPLES);
     }
-
-    context.drawImage(
-      terrainCanvas,
-      0,
-      0,
-      terrainCanvas.width,
-      terrainCanvas.height,
-      0,
-      0,
-      width,
-      height,
-    );
+    lastPointerPosition = { x: pointer.x, y: pointer.y };
   };
 
   return createCanvasMovement(
     container,
     {
       render(frame) {
-        const { context, width, height, pointer } = frame;
-        if (!frame.policy.staticFallback && frame.delta > 0) {
-          for (const point of revealed) point.life -= frame.delta;
-          while (revealed.length > 0 && revealed[0]!.life <= 0) revealed.shift();
-        }
+        const { context, width, height, pixelRatio, pointer, time, delta } = frame;
         clear(context, width, height);
         if (options.renderSurface) {
           options.renderSurface(context, width, height);
@@ -310,205 +651,92 @@ export function createTerrainScanner(
           drawWebsiteSurface(context, width, height, surfaceColor);
         }
 
-        const radius =
-          revealRadius +
-          (frame.policy.staticFallback ? 0 : Math.min(pointer.speed / 26, 42));
-        const inputTravel = lastInputPosition
-          ? distance(lastInputPosition, pointer)
-          : pointer.active
-            ? 1
-            : 0;
-        const pointerMoved = inputTravel > 0.4;
-        if (pointer.active && pointerMoved) {
-          lastInputPosition = { x: pointer.x, y: pointer.y };
+        if (frame.policy.staticFallback) return;
+        ensureBuffers(frame);
+        addPointerSample(frame);
+        while (
+          samples[0] &&
+          time - samples[0].time >= revealDuration
+        ) {
+          samples.shift();
         }
-        const last = revealed[revealed.length - 1];
-        const lastPosition = last
-          ? { x: last.x * width, y: last.y * height }
-          : null;
-        const travel = lastPosition ? distance(lastPosition, pointer) : 0;
-        const spacing = Math.max(5, radius * 0.075);
-        if (pointer.active && pointerMoved && !last) {
-          addTrailPoint(
-            pointer.x,
-            pointer.y,
-            radius,
+
+        if (samples.length && maskContext && textureContext && overlayContext) {
+          drawMask(
+            maskContext,
+            samples,
+            time,
             width,
             height,
-            trailDistance,
+            pixelRatio,
+            revealDuration,
+            radiusScale,
           );
-        } else if (pointer.active && last && travel >= spacing) {
-          const steps = Math.min(42, Math.ceil(travel / spacing));
-          for (let step = 1; step <= steps; step += 1) {
-            const progress = step / steps;
-            trailDistance += travel / steps;
-            addTrailPoint(
-              lastPosition!.x + (pointer.x - lastPosition!.x) * progress,
-              lastPosition!.y + (pointer.y - lastPosition!.y) * progress,
-              radius,
-              width,
-              height,
-              trailDistance,
-              revealDuration - (steps - step) * 5,
-            );
+          overlayContext.setTransform(1, 0, 0, 1, 0, 0);
+          overlayContext.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+          overlayContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+          overlayContext.globalCompositeOperation = "source-over";
+          overlayContext.drawImage(
+            textureCanvas,
+            0,
+            0,
+            textureCanvas.width,
+            textureCanvas.height,
+            0,
+            0,
+            width,
+            height,
+          );
+          overlayContext.globalCompositeOperation = "destination-in";
+          overlayContext.drawImage(
+            maskCanvas,
+            0,
+            0,
+            maskCanvas.width,
+            maskCanvas.height,
+            0,
+            0,
+            width,
+            height,
+          );
+          overlayContext.globalCompositeOperation = "source-over";
+          const latest = samples[samples.length - 1];
+          if (latest) {
+            drawScanFront(overlayContext, latest, time, palette, radiusScale);
           }
-          if (revealed.length > 900) {
-            revealed.splice(0, revealed.length - 900);
-          }
-        } else if (pointer.active && pointerMoved && last) {
-          last.life = revealDuration;
-          last.x = pointer.x / width;
-          last.y = pointer.y / height;
-          last.radius = radius / Math.min(width, height);
+          context.drawImage(
+            overlayCanvas,
+            0,
+            0,
+            overlayCanvas.width,
+            overlayCanvas.height,
+            0,
+            0,
+            width,
+            height,
+          );
         }
 
-        const drawReveal = (radiusMultiplier: number, alpha: number) => {
-          context.save();
-          context.beginPath();
-          if (frame.policy.staticFallback) {
-            context.moveTo(width * 0.38, 0);
-            context.lineTo(width, 0);
-            context.lineTo(width, height);
-            context.lineTo(width * 0.58, height);
-            context.closePath();
+        if (pointer.active) {
+          if (!haloReady) {
+            halo.x = pointer.x;
+            halo.y = pointer.y;
+            haloReady = true;
           } else {
-            const scale = Math.min(width, height);
-            const latestDistance = revealed[revealed.length - 1]?.distance ?? 0;
-            const taperDistance = Math.max(radius * 5.2, 1);
-            for (const point of revealed) {
-              const remaining = Math.max(0, point.life / revealDuration);
-              const timeTaper = Math.pow(remaining, 0.72);
-              const distanceBehind = Math.max(
-                0,
-                latestDistance - point.distance,
-              );
-              const spatialProgress = Math.max(
-                0,
-                1 - distanceBehind / taperDistance,
-              );
-              const spatialTaper =
-                0.025 + 0.975 * Math.pow(spatialProgress, 1.18);
-              const cometTaper = timeTaper * spatialTaper;
-              const pointRadius =
-                point.radius * scale * cometTaper * radiusMultiplier;
-              if (pointRadius < 0.8) continue;
-              context.moveTo(point.x * width + pointRadius, point.y * height);
-              context.arc(
-                point.x * width,
-                point.y * height,
-                pointRadius,
-                0,
-                Math.PI * 2,
-              );
-            }
+            const smoothing = 1 - Math.exp(-Math.max(delta, 1) / 70);
+            halo.x += (pointer.x - halo.x) * smoothing;
+            halo.y += (pointer.y - halo.y) * smoothing;
           }
-          context.clip();
-          context.globalAlpha = alpha;
-          drawCachedTerrain(context, width, height, frame.pixelRatio);
-          context.restore();
-        };
-
-        const head = revealed[revealed.length - 1];
-        const headStrength = head
-          ? Math.pow(Math.max(0, head.life / revealDuration), 0.72)
-          : 0;
-        const headX = head ? head.x * width : pointer.x;
-        const headY = head ? head.y * height : pointer.y;
-        const headRadius = head
-          ? head.radius * Math.min(width, height)
-          : radius;
-
-        if (frame.policy.staticFallback) {
-          drawReveal(1, 1);
-        } else {
-          drawReveal(1.18, 0.07);
-          drawReveal(1.06, 0.11);
-          drawReveal(0.94, 0.22);
-          drawReveal(0.82, 0.58);
-
-          context.save();
-          context.beginPath();
-          context.arc(
-            headX,
-            headY,
-            headRadius * 0.64 * headStrength,
-            0,
-            Math.PI * 2,
-          );
-          context.clip();
-          context.globalAlpha = 0.88 * headStrength;
-          drawCachedTerrain(context, width, height, frame.pixelRatio);
-          context.restore();
-        }
-
-        if (!frame.policy.staticFallback && headStrength > 0) {
-          const angle = Math.atan2(pointer.velocityY, pointer.velocityX || 1);
-          context.save();
-          context.globalAlpha = headStrength;
-          context.translate(headX, headY);
-          context.rotate(angle);
-          const frontLength = headRadius * 0.62;
-          const field = context.createLinearGradient(-frontLength, 0, 8, 0);
-          field.addColorStop(0, `rgba(${accent}, 0)`);
-          field.addColorStop(0.72, `rgba(${accent}, 0.13)`);
-          field.addColorStop(1, `rgba(${accent}, 0)`);
-          context.fillStyle = field;
-          context.beginPath();
-          context.moveTo(-frontLength, -headRadius * 0.68);
-          context.lineTo(4, -headRadius * 0.46);
-          context.lineTo(4, headRadius * 0.46);
-          context.lineTo(-frontLength, headRadius * 0.68);
-          context.closePath();
-          context.fill();
-
-          const sweep = context.createLinearGradient(
-            0,
-            -headRadius * 0.72,
-            0,
-            headRadius * 0.72,
-          );
-          sweep.addColorStop(0, `rgba(${accent}, 0)`);
-          sweep.addColorStop(0.5, `rgba(${accent}, 0.94)`);
-          sweep.addColorStop(1, `rgba(${accent}, 0)`);
-          context.strokeStyle = sweep;
-          context.lineWidth = 1.35;
-          context.beginPath();
-          context.moveTo(0, -headRadius * 0.72);
-          context.lineTo(0, headRadius * 0.72);
-          context.stroke();
-          context.restore();
-
-          const halo = context.createRadialGradient(
-            headX,
-            headY,
-            headRadius * 0.7,
-            headX,
-            headY,
-            headRadius * 1.06,
-          );
-          halo.addColorStop(0, `rgba(${accent}, 0)`);
-          halo.addColorStop(0.8, `rgba(${accent}, 0.1)`);
-          halo.addColorStop(1, `rgba(${accent}, 0)`);
-          context.fillStyle = halo;
-          context.beginPath();
-          context.arc(headX, headY, headRadius * 1.06, 0, Math.PI * 2);
-          context.fill();
-
-          context.beginPath();
-          context.arc(headX, headY, headRadius, 0, Math.PI * 2);
-          context.strokeStyle = `rgba(${accent}, 0.7)`;
-          context.lineWidth = 1.1;
-          context.stroke();
-          context.beginPath();
-          context.arc(headX, headY, 4.5, 0, Math.PI * 2);
-          context.fillStyle = `rgb(${accent})`;
-          context.fill();
+          drawCursor(frame, halo, palette, accent);
         }
       },
     },
     {
       hideNativeCursor: options.hideNativeCursor ?? true,
-      renderOnCoarsePointer: true,
+      maxPixelRatio: 1.5,
+      pixelBudget: 2_400_000,
+      renderOnCoarsePointer: false,
+      renderOnReducedMotion: false,
     },
   );
 }

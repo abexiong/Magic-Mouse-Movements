@@ -12,9 +12,11 @@ Active Links connects the pointer to nearby configurable nodes and animates sign
     nodes: [{ x: .2, y: .3 }, { x: .5, y: .7 }, { x: .82, y: .28 }],
   })
   links.start()
-  window.addEventListener("pagehide", () => links.destroy(), { once: true })
+window.addEventListener("pagehide", () => links.destroy(), { once: true })
 </script>
 ```
+
+Use `nodeSelector` to register live relationship elements. The renderer remeasures visible targets every 90 milliseconds and falls back to configurable coordinate nodes when no registered elements are present.
 
 ## React
 

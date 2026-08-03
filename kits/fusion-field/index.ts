@@ -1,5 +1,5 @@
 import { createCanvasMovement } from "../../src/core/canvas-movement.js";
-import { clear, clamp, seededRandom, TAU } from "../../src/core/drawing.js";
+import { clamp, seededRandom, TAU } from "../../src/core/drawing.js";
 import type {
   CanvasFrame,
   MovementInstance,
@@ -204,12 +204,12 @@ function renderScatterBodies(
     const drag = Math.exp(-seconds * 3.5);
     body.velocityX *= drag;
     body.velocityY *= drag;
-    const home = Math.exp(-seconds * 1.35);
+    const home = Math.exp(-seconds * 1.1);
     body.offsetX *= home;
     body.offsetY *= home;
     body.rotation += body.rotationVelocity * seconds;
-    body.rotationVelocity *= Math.exp(-seconds * 3.1);
-    body.rotation *= Math.exp(-seconds * 1.45);
+    body.rotationVelocity *= Math.exp(-seconds * 3);
+    body.rotation *= Math.exp(-seconds * 1.4);
 
     const displacement = Math.hypot(body.offsetX, body.offsetY);
     const maximumDisplacement = Math.min(
@@ -269,7 +269,7 @@ function updateCursorMotion(frame: CanvasFrame, motion: CursorMotion) {
 
   const velocityX = (frame.pointer.x - motion.x) / seconds;
   const velocityY = (frame.pointer.y - motion.y) / seconds;
-  const rawSpeed = Math.min(3_600, Math.hypot(velocityX, velocityY));
+  const rawSpeed = Math.min(4_000, Math.hypot(velocityX, velocityY));
   if (rawSpeed > 1) {
     motion.directionX = velocityX / rawSpeed;
     motion.directionY = velocityY / rawSpeed;
@@ -290,10 +290,10 @@ function drawTrail(
   const last = trail[trail.length - 1];
   if (
     pointer.active &&
-    (!last || Math.hypot(last.x - pointer.x, last.y - pointer.y) > 2.2)
+    (!last || Math.hypot(last.x - pointer.x, last.y - pointer.y) > 1.4)
   ) {
     trail.push({ x: pointer.x, y: pointer.y, age: 0 });
-    if (trail.length > 150) trail.splice(0, trail.length - 150);
+    if (trail.length > 200) trail.splice(0, trail.length - 200);
   }
 
   for (const point of trail) point.age += delta / 1000;
@@ -379,10 +379,10 @@ export function createFusionField(
   options: FusionFieldOptions = {},
 ): MovementInstance {
   const random = seededRandom(98243);
-  const haloRadius = options.haloRadius ?? 118;
+  const haloRadius = options.haloRadius ?? 210;
   const trailLife = options.trailLife ?? 0.62;
   const digits: Digit[] = Array.from(
-    { length: options.digitCount ?? 230 },
+    { length: options.digitCount ?? 275 },
     (_, index) => ({
       angle: random() * TAU,
       character: index % 2 === 0 ? "0" : "1",
@@ -420,10 +420,18 @@ export function createFusionField(
         scatterPrepared = true;
         measureScatterBodies(container, scatter.bodies);
       }
-      clear(context, width, height);
-      const center = { x: width * 0.64, y: height * 0.53 };
+      const mobile = window.matchMedia("(max-width: 900px)").matches;
+      context.fillStyle = "rgba(7, 10, 15, 0.3)";
+      context.fillRect(0, 0, width, height);
+      const center = {
+        x: width * (mobile ? 0.5 : 0.78),
+        y: height * (mobile ? 0.865 : 0.6),
+      };
       const seconds = Math.min(0.04, delta / 1000);
-      const maxRadius = Math.hypot(width, height) * 0.49;
+      const maxRadius = Math.max(width, height) * 0.72;
+      const activeDigitCount = options.digitCount ?? (mobile
+        ? 110
+        : Math.min(275, Math.max(160, Math.round((width * height) / 5_600))));
       updateCursorMotion(frame, motion);
       const speed = motion.speed;
       const directionX = motion.directionX;
@@ -451,7 +459,9 @@ export function createFusionField(
       context.textAlign = "center";
       context.textBaseline = "middle";
       context.globalCompositeOperation = "lighter";
-      for (const digit of digits) {
+      for (let digitIndex = 0; digitIndex < activeDigitCount; digitIndex += 1) {
+        const digit = digits[digitIndex];
+        if (!digit) continue;
         if (!frame.policy.staticFallback) {
           digit.radius -= seconds * (8.5 + digit.radius * 0.032) * digit.speed;
           digit.angle +=
@@ -469,8 +479,8 @@ export function createFusionField(
           }
         }
 
-        const orbitX = center.x + Math.cos(digit.angle) * digit.radius * 1.2;
-        const orbitY = center.y + Math.sin(digit.angle) * digit.radius * 0.72;
+        const orbitX = center.x + Math.cos(digit.angle) * digit.radius;
+        const orbitY = center.y + Math.sin(digit.angle) * digit.radius * 0.86;
         const currentX = orbitX + digit.offsetX;
         const currentY = orbitY + digit.offsetY;
         const dx = currentX - pointer.x;
@@ -485,12 +495,12 @@ export function createFusionField(
           const influence = 1 - distance / haloRadius;
           const outwardX = dx / distance;
           const outwardY = dy / distance;
-          const impulse = influence * (155 + speed * 1.15) * seconds * 15;
+          const impulse = influence * (170 + speed * 2.8) * seconds;
           digit.velocityX +=
-            (outwardX * 0.82 + directionX * 0.46 - outwardY * 0.12) *
+            (outwardX * 0.85 + directionX * 0.35 - outwardY * 0.2) *
             impulse;
           digit.velocityY +=
-            (outwardY * 0.82 + directionY * 0.46 + outwardX * 0.12) *
+            (outwardY * 0.85 + directionY * 0.35 + outwardX * 0.2) *
             impulse;
         }
 
@@ -529,13 +539,14 @@ export function createFusionField(
       context.restore();
 
       const corePulse = 1 + Math.sin(time * 0.0016) * 0.06;
+      const coreRadius = (mobile ? 58 : 104) * corePulse;
       const coreGlow = context.createRadialGradient(
         center.x,
         center.y,
         0,
         center.x,
         center.y,
-        76 * corePulse,
+        coreRadius,
       );
       coreGlow.addColorStop(0, "rgba(255, 238, 250, 0.96)");
       coreGlow.addColorStop(0.1, "rgba(224, 80, 174, 0.82)");
@@ -543,7 +554,7 @@ export function createFusionField(
       coreGlow.addColorStop(1, "rgba(202, 44, 146, 0)");
       context.fillStyle = coreGlow;
       context.beginPath();
-      context.arc(center.x, center.y, 76 * corePulse, 0, TAU);
+      context.arc(center.x, center.y, coreRadius, 0, TAU);
       context.fill();
       context.fillStyle = "rgba(255, 242, 251, 0.94)";
       context.beginPath();
@@ -557,7 +568,7 @@ export function createFusionField(
           haloRadius,
           options.accent ?? "rgba(255, 242, 251, 0.98)",
         );
-        renderScatterBodies(frame, scatter.bodies, haloRadius + 34, motion);
+        renderScatterBodies(frame, scatter.bodies, 180, motion);
       } else {
         resetScatterBodies(scatter.bodies);
       }

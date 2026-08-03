@@ -80,12 +80,15 @@ test("Terrain Scanner and Layered Reveal ship complete contrasting scenes", asyn
     "utf8",
   )
   assert.match(terrain, /surfaceColor/)
-  assert.match(terrain, /const revealed: ScanPoint\[\]/)
+  assert.match(terrain, /const samples: RadarSample\[\]/)
   assert.match(terrain, /revealDuration/)
-  assert.match(terrain, /point\.life -= frame\.delta/)
   assert.match(terrain, /drawWebsiteSurface/)
-  assert.match(terrain, /cometTaper/)
-  assert.match(terrain, /options\.revealDuration \?\? 3_000/)
+  assert.match(terrain, /drawTerrainTexture/)
+  assert.match(terrain, /drawMask/)
+  assert.match(terrain, /REFERENCE_TRAIL_LIFETIME = 1_400/)
+  assert.match(terrain, /MAX_SAMPLES = 78/)
+  assert.match(terrain, /globalCompositeOperation = "destination-in"/)
+  assert.match(terrain, /options\.revealDuration \?\? REFERENCE_TRAIL_LIFETIME/)
   assert.doesNotMatch(terrain, /drawTerrain\(context, width, height, 0\.13\)/)
   assert.match(layered, /SOMETHING/)
   assert.match(layered, /OLD/)
@@ -93,6 +96,9 @@ test("Terrain Scanner and Layered Reveal ship complete contrasting scenes", asyn
   assert.match(layered, /const revealed: RevealPoint\[\]/)
   assert.match(layered, /revealDuration/)
   assert.match(layered, /point\.life -= frame\.delta/)
+  assert.match(layered, /let lastPointerSample: Point \| null = null/)
+  assert.match(layered, /frame\.canvas\.dataset\.revealPoints/)
+  assert.doesNotMatch(layered, /last\.life = revealDuration/)
   assert.match(layered, /videoSrc/)
   assert.match(layered, /videoPoster/)
   await access(
@@ -125,11 +131,96 @@ test("Passband Lens can auto-cycle and Constellation Wand ships a dense graph", 
     "utf8",
   )
   assert.match(passband, /autoCycleMs/)
+  assert.match(passband, /uniform sampler2D uTex/)
+  assert.match(passband, /coverUv/)
+  assert.match(passband, /ironbow/)
+  assert.match(passband, /sobel/)
+  assert.match(passband, /semanticLook/)
+  assert.match(passband, /vec3 color = opticalLook\(base\)/)
+  assert.match(passband, /vec3 scopeColor = bandLook\(scopeIndex/)
+  assert.match(passband, /bandLook\(mod\(scopeIndex \+ 1\.0, 4\.0\)/)
+  assert.match(passband, /bandTarget \+= \(nextIndex - normalizedTarget \+ BANDS\.length\)/)
+  assert.match(passband, /imageSrc/)
+  assert.match(passband, /Math\.min\(canvas\.width, canvas\.height\) \* 0\.16/)
   assert.match(passband, /startAutoCycle/)
   assert.match(passband, /stopAutoCycle/)
+  assert.match(passband, /function createContactSheet/)
+  assert.match(passband, /const activateFallback/)
+  assert.match(passband, /webglcontextlost/)
+  assert.match(passband, /webglcontextrestored/)
+  assert.match(passband, /replacement = createPassbandLens/)
+  assert.match(passband, /usesNativeCursor\(event\.target\)/)
+  assert.match(passband, /container\.style\.cursor = ""/)
+  assert.match(passband, /\.catch\(\(error: unknown\) =>/)
+  assert.match(passband, /fallback\?\.setBand\(nextBand\)/)
+  await access(
+    new URL(
+      "kits/passband-lens/demo/passband-terrain-v2.jpg",
+      repositoryRoot,
+    ),
+  )
   assert.match(constellation, /id: "adapt"/)
   assert.match(constellation, /id: "archive"/)
   assert.match(constellation, /id: "observe"/)
+  assert.match(constellation, /id: "release"/)
+  assert.match(constellation, /const dustCount = width < 680 \? 150 : 280/)
+  assert.match(constellation, /pointerDistance \/ 330/)
+})
+
+test("first-party interaction constants remain intact", async () => {
+  const sources = Object.fromEntries(await Promise.all(
+    [
+      "orbit-trail",
+      "system-assembly",
+      "active-links",
+      "pathfinder",
+      "layered-reveal",
+      "magnetic-ink",
+      "fusion-field",
+    ].map(async (slug) => [
+      slug,
+      await readFile(new URL(`kits/${slug}/index.ts`, repositoryRoot), "utf8"),
+    ]),
+  ))
+  assert.match(sources["orbit-trail"], /time - trail\[0\]\.born > 900/)
+  assert.match(sources["orbit-trail"], /13 \+ expansion \* 15/)
+  assert.match(sources["orbit-trail"], /nodeSelector\?: string/)
+  assert.match(sources["orbit-trail"], /stageIndex\?: number \| \(\(\) => number\)/)
+  assert.match(sources["system-assembly"], /const radius = 27/)
+  assert.match(sources["system-assembly"], /nodeDistance < 420/)
+  assert.match(sources["system-assembly"], /targetSelector\?: string/)
+  assert.match(sources["system-assembly"], /activeIndex\?: number \| \(\(\) => number\)/)
+  assert.match(sources["active-links"], /options\.radius \?\? 540/)
+  assert.match(sources["active-links"], /time \* 0\.00042/)
+  assert.match(sources["active-links"], /nodeSelector\?: string/)
+  assert.match(sources.pathfinder, /const cursorCorners/)
+  assert.match(sources.pathfinder, /const targetRect/)
+  assert.match(sources["layered-reveal"], /options\.revealDuration \?\? 2_600/)
+  assert.match(sources["layered-reveal"], /Math\.ceil\(travel \/ 9\)/)
+  assert.match(sources["layered-reveal"], /video\.autoplay = !prefersStaticMedia/)
+  assert.match(sources["magnetic-ink"], /options\.particleCount \?\? \(coarsePointer \? 170 : 300\)/)
+  assert.match(sources["magnetic-ink"], /options\.attractionRadius \?\? 275/)
+  assert.match(sources["magnetic-ink"], /reversals\.length >= 3/)
+  assert.match(sources["magnetic-ink"], /delta \/ 18_000/)
+  assert.match(sources["magnetic-ink"], /const frameScale = clamp\(delta \/ 16\.67, 0\.25, 3\)/)
+  assert.match(sources["magnetic-ink"], /particle\.vx \*= Math\.pow\(0\.938, frameScale\)/)
+  assert.match(sources["fusion-field"], /options\.haloRadius \?\? 210/)
+  assert.match(sources["fusion-field"], /width \* \(mobile \? 0\.5 : 0\.78\)/)
+  assert.match(sources["fusion-field"], /mobile \? 58 : 104/)
+  assert.match(sources["fusion-field"], /renderScatterBodies\(frame, scatter\.bodies, 180, motion\)/)
+})
+
+test("the shared controller restores native cursors over interactive and selectable content", async () => {
+  const source = await readFile(
+    new URL("src/core/canvas-movement.ts", repositoryRoot),
+    "utf8",
+  )
+  assert.match(source, /function nativeCursorTarget/)
+  assert.match(source, /\[data-cursor-native\]/)
+  assert.match(source, /"button"/)
+  assert.match(source, /"p"/)
+  assert.match(source, /container\.style\.cursor = nativeCursor \? "" : "none"/)
+  assert.match(source, /pointer\.active = !nativeCursorTarget\(event\.target\)/)
 })
 
 test("public source contains no private paths or em dashes", async () => {
