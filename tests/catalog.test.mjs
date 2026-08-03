@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { readdir, readFile } from "node:fs/promises"
+import { access, readdir, readFile } from "node:fs/promises"
 import { test } from "node:test"
 import { movementCatalog } from "../dist/src/catalog.js"
 import * as publicApi from "../dist/src/index.js"
@@ -40,6 +40,21 @@ test("every catalog folder documents standalone HTML and React", async () => {
   }
 })
 
+test("repository visuals are present and linked from the README", async () => {
+  const readme = await readFile(new URL("README.md", repositoryRoot), "utf8")
+  const visuals = [
+    "magic-mouse-movements-overview.png",
+    "passband-lens-feature.png",
+    "movement-gallery.png",
+  ]
+  for (const visual of visuals) {
+    await access(new URL(`docs/images/${visual}`, repositoryRoot))
+    assert.match(readme, new RegExp(`docs/images/${visual.replaceAll(".", "\\.")}`))
+  }
+  assert.doesNotMatch(readme, /Interactive Cursor Lab/)
+  assert.doesNotMatch(readme, /10 Free Mouse Effects/)
+})
+
 test("public source contains no private paths or em dashes", async () => {
   const blocked = ["/Users/"]
   const roots = [
@@ -49,6 +64,7 @@ test("public source contains no private paths or em dashes", async () => {
     "THIRD_PARTY_NOTICES.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
+    "docs/images/README.md",
     "examples",
     "scripts",
     "src",
