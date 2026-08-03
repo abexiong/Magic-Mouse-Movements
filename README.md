@@ -7,7 +7,11 @@ Complete, accessible cursor effect kits for product stories, portfolios, data re
 </p>
 
 <p align="center">
-  <img src="./docs/images/magic-mouse-movements-overview.png" alt="Magic Mouse Movements website concept with Passband Lens, the movement catalog, complete kit anatomy, code examples, and repository actions" width="760" />
+  <img src="./docs/images/passband-lens-replay.gif" alt="Animated Passband Lens replay moving across one terrain image while Auto cycles optical, thermal, radar, and semantic scans" width="760" />
+</p>
+
+<p align="center">
+  <em>One terrain plate stays fixed while the live lens moves and cycles through four registered scan modes.</em>
 </p>
 
 <p align="center">
@@ -50,9 +54,11 @@ Passband Lens is useful when visitors need to inspect one registered image throu
 
 The catalog covers trails, assembly, active links, pathfinding, scanning, layered reveals, magnetic particles, constellations, and binary fields. New movements can join the same manifest and lifecycle without changing the integration model.
 
+![Magic Mouse Movements website concept with Passband Lens, the movement catalog, complete kit anatomy, code examples, and repository actions](./docs/images/magic-mouse-movements-overview.png)
+
 ![A visual gallery of cursor trails, linked nodes, pathfinding, terrain scanning, layered reveals, magnetic particles, constellations, and a binary vortex](./docs/images/movement-gallery.png)
 
-The Passband image is a browser capture of the live engine. The overview and gallery are conceptual previews. Use the live playground or run the local gallery to interact with every rendering engine.
+The Passband replay and feature image are browser captures of the live engine. The overview and gallery are conceptual previews. Use the live playground or run the local gallery to interact with every rendering engine.
 
 ## Install
 

@@ -45,6 +45,7 @@ test("repository visuals are present and linked from the README", async () => {
   const readme = await readFile(new URL("README.md", repositoryRoot), "utf8")
   const visuals = [
     "magic-mouse-movements-overview.png",
+    "passband-lens-replay.gif",
     "passband-lens-feature.png",
     "movement-gallery.png",
   ]
