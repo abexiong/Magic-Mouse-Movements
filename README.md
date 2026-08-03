@@ -1,6 +1,10 @@
 # Magic Mouse Movements
 
-Free interactive cursor effects for websites.
+Complete, accessible cursor effect kits for product stories, portfolios, data reveals, guided navigation, and experimental websites.
+
+<p align="center">
+  <a href="https://www.abrahamxiong.com/resources/magic-mouse-movements"><strong>Try every movement in the live playground</strong></a>
+</p>
 
 <p align="center">
   <img src="./docs/images/magic-mouse-movements-overview.png" alt="Magic Mouse Movements website concept with Passband Lens, the movement catalog, complete kit anatomy, code examples, and repository actions" width="760" />
@@ -13,32 +17,42 @@ Free interactive cursor effects for websites.
   <img alt="React optional" src="https://img.shields.io/badge/React-optional-a8c4ff" />
 </p>
 
-Magic Mouse Movements is a growing catalog of complete, customizable interaction kits. Each kit includes the pointer behavior, visual engine, neutral demonstration scene, accessibility policy, lifecycle cleanup, and standalone plus React usage guidance needed to reproduce the effect.
+Magic Mouse Movements helps the pointer do useful work. A movement can reveal a hidden layer, connect related content, guide visitors toward the next action, explain a technical system, or give a launch page a memorable interactive moment.
 
-## Principles
+Each movement is a complete, customizable kit. You get the pointer behavior, visual engine, demonstration scene, accessibility policy, lifecycle cleanup, and standalone plus React guidance. Start with a working interaction, then replace the scene, tune the physics, and adapt the visual language to your site.
 
-- Complete kits, not isolated cursor snippets
-- Dependency-free rendering cores
-- Native cursor restoration and semantic HTML first
-- Fine-pointer enhancement with touch and reduced-motion fallbacks
-- One movement mounted and animated at a time
-- Neutral assets and clean public provenance
+## Choose by use case
+
+| What your page needs | Recommended movements | Example applications |
+|---|---|---|
+| Reveal hidden detail or compare visual states | Passband Lens, Terrain Scanner, Layered Reveal | Maps, technical imagery, before-and-after work, product layers |
+| Guide attention toward relevant content | Pathfinder, Active Links, Orbit Trail | Case studies, chapter navigation, calls to action, related evidence |
+| Make a system or process easier to understand | System Assembly, Constellation Wand | Architecture, capabilities, relationships, workflows |
+| Add expressive motion to a high-impact moment | Magnetic Ink, Fusion Field, Orbit Trail | Portfolio heroes, product launches, campaigns, interactive editorial |
+
+## Why use a complete kit
+
+- **Show the idea clearly.** The included scene demonstrates why the interaction exists, not only how the cursor moves.
+- **Integrate faster.** Start from a working Canvas 2D or WebGL2 engine with direct imports for each movement.
+- **Keep the page usable.** Native controls, semantic HTML, touch behavior, reduced motion, and static fallbacks remain part of the contract.
+- **Clean up safely.** Every movement exposes the same lifecycle so observers, listeners, frames, canvases, and graphics resources can be released.
+- **Make it your own.** Swap the imagery, labels, nodes, particles, targets, colors, timing, and physics without rebuilding the engine.
 
 ## Visual tour
 
 ### Passband Lens
 
-The lead movement keeps one photoreal aerial terrain plate optical while the movable lens rotates through registered optical, thermal, radar, and semantic instruments.
+Passband Lens is useful when visitors need to inspect one registered image through multiple information layers. The base terrain remains optical while the movable scope switches between optical, thermal, radar, and semantic views.
 
 ![Passband Lens previewing a thermal instrument inside an optical view of a photoreal aerial test range](./docs/images/passband-lens-feature.png)
 
 ### A catalog designed to grow
 
-The current kits explore trails, assembly, active links, pathfinding, scanning, layered reveals, magnetic particles, constellations, and binary fields. New movements can join the same manifest and lifecycle without changing the public promise.
+The catalog covers trails, assembly, active links, pathfinding, scanning, layered reveals, magnetic particles, constellations, and binary fields. New movements can join the same manifest and lifecycle without changing the integration model.
 
 ![A visual gallery of cursor trails, linked nodes, pathfinding, terrain scanning, layered reveals, magnetic particles, constellations, and a binary vortex](./docs/images/movement-gallery.png)
 
-The Passband image is a browser capture of the live engine. The overview and gallery are conceptual previews. Run the standalone gallery to interact with every rendering engine.
+The Passband image is a browser capture of the live engine. The overview and gallery are conceptual previews. Use the live playground or run the local gallery to interact with every rendering engine.
 
 ## Install
 
@@ -54,33 +68,46 @@ import {
   PASSBAND_DEMO_IMAGE,
 } from "magic-mouse-movements/passband-lens"
 
-const movement = createPassbandLens(document.querySelector("[data-passband]"), {
+const container = document.querySelector<HTMLElement>("[data-passband]")
+if (!container) throw new Error("Passband container not found")
+
+const movement = createPassbandLens(container, {
   imageSrc: PASSBAND_DEMO_IMAGE,
 })
+
 movement.start()
 
-// Restore the native cursor and release all resources when the scene unmounts.
-movement.destroy()
+// Restore the native cursor and release all resources when the page exits.
+window.addEventListener("pagehide", () => movement.destroy(), { once: true })
 ```
 
 Run the complete local gallery with `npm run demo`.
 
+## Adapt a movement to your site
+
+1. Pick the movement that matches the job your page needs to do.
+2. Copy its neutral demonstration scene or provide your own imagery and content.
+3. Tune the exported options for timing, radius, particle count, selectors, and callbacks.
+4. Keep the fallback and lifecycle behavior intact when you integrate it.
+
+Each folder under [`kits/`](./kits) includes standalone HTML and React examples, options, accessibility notes, and cleanup guidance.
+
 ## Current catalog
 
-| Movement | Technology | Primary behavior |
+| Movement | Technology | Useful for |
 |---|---|---|
-| Passband Lens | WebGL2 | Keep one terrain optical while its movable scope rotates through registered sensing bands |
-| Orbit Trail | Canvas 2D | Follow a chapter-aware path with orbit telemetry |
-| System Assembly | Canvas 2D | Assemble segments around the pointer and nearby domains |
-| Active Links | Canvas 2D | Connect the pointer to nearby registered nodes |
-| Pathfinder | Canvas 2D | Route orthogonally toward the nearest target |
-| Terrain Scanner | Canvas 2D | Scan a website surface with a transparent radar trail, terrain contours, and a soft 1.4-second decay |
-| Layered Reveal | Canvas 2D | Erase Something Old to uncover Abraham Xiong's looping Something New film |
-| Magnetic Ink | Canvas 2D | Attract particles, write on press, and scatter on reversal |
-| Constellation Wand | Canvas 2D | Bend a dense graph, highlight paths, and select destinations |
-| Fusion Field | Canvas 2D | Move through a binary vortex with a comet trail and velocity response |
+| Passband Lens | WebGL2 | Inspecting maps, terrain, products, or technical imagery through registered visual modes |
+| Orbit Trail | Canvas 2D | Connecting long-form chapters and turning page progression into a visible journey |
+| System Assembly | Canvas 2D | Explaining capabilities, architecture, and how separate parts form a system |
+| Active Links | Canvas 2D | Showing relationships between nearby content, nodes, and destinations |
+| Pathfinder | Canvas 2D | Guiding visitors toward the nearest action, evidence point, or next step |
+| Terrain Scanner | Canvas 2D | Revealing hidden spatial or technical detail without covering the readable page |
+| Layered Reveal | Canvas 2D | Comparing old and new states, before-and-after work, or two visual narratives |
+| Magnetic Ink | Canvas 2D | Adding tactile drawing and particle response to expressive brand moments |
+| Constellation Wand | Canvas 2D | Making networks, destinations, and connected ideas feel explorable |
+| Fusion Field | Canvas 2D | Giving technology stories and launch pages a responsive cinematic focal point |
 
-## Lifecycle
+## Shared lifecycle
 
 Every kit exposes the same lifecycle:
 
@@ -92,4 +119,16 @@ movement.resize()
 movement.destroy()
 ```
 
-See each folder under `kits/` for complete usage and customization guidance.
+Only one movement needs to be mounted and animated at a time. Rendering cores are dependency-free, while React remains an optional integration layer.
+
+## Accessibility and fallbacks
+
+The effects enhance a page. They should never become the only way to understand or navigate it. Keep important content in semantic HTML, preserve native keyboard behavior, and use the included reduced-motion, coarse-pointer, and static fallback paths.
+
+## Contributing
+
+New movements are welcome when they include a complete demonstration scene, documented integration path, accessibility behavior, cleanup, and public provenance. See [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a contribution.
+
+## License
+
+Magic Mouse Movements is available under the [MIT License](./LICENSE).

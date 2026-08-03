@@ -54,6 +54,11 @@ test("repository visuals are present and linked from the README", async () => {
   }
   assert.doesNotMatch(readme, /Interactive Cursor Lab/)
   assert.doesNotMatch(readme, /10 Free Mouse Effects/)
+  assert.match(readme, /## Choose by use case/)
+  assert.match(readme, /## Why use a complete kit/)
+  assert.match(readme, /## Adapt a movement to your site/)
+  assert.match(readme, /product stories, portfolios, data reveals, guided navigation/)
+  assert.match(readme, /https:\/\/www\.abrahamxiong\.com\/resources\/magic-mouse-movements/)
 })
 
 test("Fusion Field includes its halo, ringed trail, and collision physics", async () => {
