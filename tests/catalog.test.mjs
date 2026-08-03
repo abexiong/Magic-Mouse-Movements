@@ -271,6 +271,31 @@ test("the shared controller restores native cursors over interactive and selecta
   assert.match(source, /pointer\.active = !nativeCursorTarget\(event\.target\)/)
 })
 
+test("repository contribution safeguards remain documented and automated", async () => {
+  const contribution = await readFile(new URL("CONTRIBUTING.md", repositoryRoot), "utf8")
+  const security = await readFile(new URL("SECURITY.md", repositoryRoot), "utf8")
+  const workflow = await readFile(new URL(".github/workflows/ci.yml", repositoryRoot), "utf8")
+  const protectedFiles = [
+    ".github/CODEOWNERS",
+    ".github/dependabot.yml",
+    ".github/pull_request_template.md",
+    ".github/ISSUE_TEMPLATE/config.yml",
+    ".github/ISSUE_TEMPLATE/bug_report.yml",
+    ".github/ISSUE_TEMPLATE/movement_proposal.yml",
+    ".github/ISSUE_TEMPLATE/documentation.yml",
+  ]
+
+  assert.match(contribution, /Only a maintainer can merge into `main`/)
+  assert.match(contribution, /GitHub Actions runs the `verify` job/)
+  assert.match(security, /security\/advisories\/new/)
+  assert.match(workflow, /permissions:\n  contents: read/)
+  assert.match(workflow, /actions\/checkout@[a-f0-9]{40}/)
+  assert.match(workflow, /actions\/setup-node@[a-f0-9]{40}/)
+  assert.match(workflow, /persist-credentials: false/)
+  assert.match(workflow, /npm ci --ignore-scripts/)
+  for (const file of protectedFiles) await access(new URL(file, repositoryRoot))
+})
+
 test("public source contains no private paths or em dashes", async () => {
   const blocked = ["/Users/"]
   const roots = [

@@ -1,0 +1,52 @@
+name: Movement proposal
+description: Propose a new cursor interaction kit and explain the job it should perform.
+title: "[Movement]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What should this movement help a website visitor understand, reveal, find, or do?
+    validations:
+      required: true
+  - type: textarea
+    id: interaction
+    attributes:
+      label: Interaction behavior
+      description: Explain how pointer position, speed, press, touch, or nearby content should affect the scene.
+    validations:
+      required: true
+  - type: textarea
+    id: scene
+    attributes:
+      label: Demonstration scene
+      description: Describe the neutral content or visual layer that would make the use case clear.
+    validations:
+      required: true
+  - type: textarea
+    id: accessibility
+    attributes:
+      label: Accessibility and fallbacks
+      description: Describe keyboard, reduced-motion, coarse-pointer, data-saver, and static behavior.
+    validations:
+      required: true
+  - type: dropdown
+    id: technology
+    attributes:
+      label: Likely rendering technology
+      options:
+        - Canvas 2D
+        - WebGL2
+        - DOM and CSS
+        - Not sure
+    validations:
+      required: true
+  - type: checkboxes
+    id: provenance
+    attributes:
+      label: Asset provenance
+      options:
+        - label: I will only propose assets that can be contributed under the repository's MIT License.
+          required: true
