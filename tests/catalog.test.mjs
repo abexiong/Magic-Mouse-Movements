@@ -3,6 +3,7 @@ import { access, readdir, readFile } from "node:fs/promises"
 import { test } from "node:test"
 import { movementCatalog } from "../dist/src/catalog.js"
 import * as publicApi from "../dist/src/index.js"
+import { createPassbandModeController } from "../dist/kits/passband-lens/index.js"
 
 const repositoryRoot = new URL("../", import.meta.url)
 
@@ -136,19 +137,41 @@ test("Passband Lens can auto-cycle and Constellation Wand ships a dense graph", 
   assert.match(passband, /ironbow/)
   assert.match(passband, /sobel/)
   assert.match(passband, /semanticLook/)
-  assert.match(passband, /vec3 color = opticalLook\(base\)/)
+  assert.match(passband, /const BANDS: readonly PassbandName\[\] = \["optical", "thermal", "radar", "semantic"\]/)
+  assert.match(passband, /vec3 color = base/)
+  assert.match(passband, /mix\(color, vec3\(0\.64, 0\.86, 1\.00\), 0\.16\)/)
   assert.match(passband, /vec3 scopeColor = bandLook\(scopeIndex/)
-  assert.match(passband, /bandLook\(mod\(scopeIndex \+ 1\.0, 4\.0\)/)
-  assert.match(passband, /bandTarget \+= \(nextIndex - normalizedTarget \+ BANDS\.length\)/)
+  assert.match(passband, /float scopeIndex = mod\(floor\(uBand \+ 0\.5\), 4\.0\)/)
+  assert.match(passband, /uniform float uOpticalZoom/)
+  assert.match(passband, /\(fragmentPixel - uLens\.xy\) \/ max\(1\.0, uOpticalZoom\)/)
+  assert.match(passband, /options\.opticalZoom \?\? 1\.38/)
+  assert.doesNotMatch(passband, /scopeBlend/)
+  assert.doesNotMatch(passband, /bandTarget/)
+  assert.match(passband, /band = bandIndex\(nextBand\)/)
+  assert.match(passband, /createPassbandModeController/)
+  assert.match(passband, /options\.autoCycleMs \?\? 3_000/)
+  assert.match(passband, /isAutoCycleEnabled:/)
+  assert.match(passband, /setAutoCycle\(enabled\)/)
+  assert.match(passband, /\|\| !mode\.isAutoCycleEnabled\(\)/)
+  assert.match(passband, /setBand\(nextBand\) \{\n      mode\.selectBand\(nextBand\);\n      stopAutoCycle\(\)/)
+  assert.match(passband, /applyBand\(nextBand\)/)
+  assert.match(passband, /window\.setTimeout\(\(\) =>/)
+  assert.match(passband, /advanceBand\(\);\n      startAutoCycle\(\)/)
+  assert.doesNotMatch(passband, /window\.setInterval\(advanceBand/)
   assert.match(passband, /imageSrc/)
   assert.match(passband, /Math\.min\(canvas\.width, canvas\.height\) \* 0\.16/)
   assert.match(passband, /startAutoCycle/)
   assert.match(passband, /stopAutoCycle/)
+  assert.match(passband, /\|\| !ready/)
+  assert.match(passband, /ready = true;\n        startAutoCycle\(\)/)
+  assert.doesNotMatch(passband, /startAutoCycle\(\);\n        if \(fallback\)/)
   assert.match(passband, /function createContactSheet/)
   assert.match(passband, /const activateFallback/)
   assert.match(passband, /webglcontextlost/)
   assert.match(passband, /webglcontextrestored/)
   assert.match(passband, /replacement = createPassbandLens/)
+  assert.match(passband, /autoCycleMs: configuredAutoCycleMs/)
+  assert.match(passband, /replacement\.setAutoCycle\(mode\.isAutoCycleEnabled\(\)\)/)
   assert.match(passband, /usesNativeCursor\(event\.target\)/)
   assert.match(passband, /container\.style\.cursor = ""/)
   assert.match(passband, /\.catch\(\(error: unknown\) =>/)
@@ -165,6 +188,25 @@ test("Passband Lens can auto-cycle and Constellation Wand ships a dense graph", 
   assert.match(constellation, /id: "release"/)
   assert.match(constellation, /const dustCount = width < 680 \? 150 : 280/)
   assert.match(constellation, /pointerDistance \/ 330/)
+})
+
+test("Passband Lens defaults to Auto and manual selection remains locked", () => {
+  const mode = createPassbandModeController()
+
+  assert.equal(mode.getBand(), "optical")
+  assert.equal(mode.isAutoCycleEnabled(), true)
+  assert.deepEqual(
+    [mode.advanceBand(), mode.advanceBand(), mode.advanceBand(), mode.advanceBand()],
+    ["thermal", "radar", "semantic", "optical"],
+  )
+
+  assert.equal(mode.selectBand("radar"), "radar")
+  assert.equal(mode.isAutoCycleEnabled(), false)
+  assert.equal(mode.advanceBand(), "radar")
+
+  mode.setAutoCycle(true)
+  assert.equal(mode.isAutoCycleEnabled(), true)
+  assert.equal(mode.advanceBand(), "semantic")
 })
 
 test("first-party interaction constants remain intact", async () => {

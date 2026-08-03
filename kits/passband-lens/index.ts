@@ -8,11 +8,14 @@ export type PassbandLensOptions = {
   band?: PassbandName;
   hideNativeCursor?: boolean;
   imageSrc?: string;
+  opticalZoom?: number;
   onBandChange?: (band: PassbandName) => void;
 };
 
 export type PassbandLensInstance = MovementInstance & {
   getBand: () => PassbandName;
+  isAutoCycleEnabled: () => boolean;
+  setAutoCycle: (enabled: boolean) => void;
   setBand: (band: PassbandName) => void;
 };
 
@@ -22,6 +25,41 @@ export const PASSBAND_DEMO_IMAGE = new URL(
 ).href;
 
 const BANDS: readonly PassbandName[] = ["optical", "thermal", "radar", "semantic"];
+
+export type PassbandModeController = {
+  advanceBand: () => PassbandName;
+  getBand: () => PassbandName;
+  isAutoCycleEnabled: () => boolean;
+  selectBand: (band: PassbandName) => PassbandName;
+  setAutoCycle: (enabled: boolean) => void;
+};
+
+export function createPassbandModeController(
+  initialBand: PassbandName = "optical",
+  autoCycleEnabled = true,
+): PassbandModeController {
+  let currentBand = initialBand;
+  let automatic = autoCycleEnabled;
+
+  return {
+    advanceBand() {
+      if (!automatic) return currentBand;
+      const nextIndex = (bandIndex(currentBand) + 1) % BANDS.length;
+      currentBand = BANDS[nextIndex] ?? "optical";
+      return currentBand;
+    },
+    getBand: () => currentBand,
+    isAutoCycleEnabled: () => automatic,
+    selectBand(band) {
+      automatic = false;
+      currentBand = band;
+      return currentBand;
+    },
+    setAutoCycle(enabled) {
+      automatic = enabled;
+    },
+  };
+}
 
 const VERTEX_SHADER = `#version 300 es
 layout(location=0) in vec2 aPosition;
@@ -36,6 +74,7 @@ uniform float uBand;
 uniform float uTime;
 uniform vec3 uLens;
 uniform float uLensOn;
+uniform float uOpticalZoom;
 out vec4 outColor;
 
 const vec3 ACC_OPTICAL = vec3(0.85, 0.92, 0.95);
@@ -91,9 +130,13 @@ float sobel(vec2 uv) {
   return clamp(length(vec2(gradientX, gradientY)) * 1.6, 0.0, 1.0);
 }
 
-vec3 opticalLook(vec3 base) {
-  vec3 color = mix(vec3(luminance(base)), base, 1.06);
-  return (color - 0.5) * 1.07 + 0.5;
+vec3 opticalLook(vec2 uv, vec2 fragmentPixel, vec3 base) {
+  vec3 color = mix(vec3(luminance(base)), base, 1.34);
+  color = (color - 0.5) * 1.24 + 0.5;
+  color = mix(color, vec3(0.64, 0.86, 1.00), 0.16);
+  float edge = sobel(uv);
+  float scanline = 0.5 + 0.5 * sin(fragmentPixel.y * 0.34 + uTime * 4.0);
+  return color + ACC_OPTICAL * (edge * 0.16 + scanline * 0.022);
 }
 
 vec3 thermalLook(vec2 uv, vec3 base) {
@@ -134,7 +177,7 @@ vec3 semanticLook(vec2 uv, vec2 fragmentPixel, vec3 base) {
 }
 
 vec3 bandLook(float band, vec2 uv, vec2 fragmentPixel, vec3 base) {
-  if (band < 0.5) return opticalLook(base);
+  if (band < 0.5) return opticalLook(uv, fragmentPixel, base);
   if (band < 1.5) return thermalLook(uv, base);
   if (band < 2.5) return radarLook(uv, fragmentPixel);
   return semanticLook(uv, fragmentPixel, base);
@@ -144,19 +187,20 @@ void main() {
   vec2 fragmentPixel = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
   vec2 uv = clamp(coverUv(fragmentPixel), 0.001, 0.999);
   vec3 base = texture(uTex, uv).rgb;
-  float scopeBand = mod(uBand, 4.0);
-  float scopeIndex = floor(scopeBand + 0.0001);
-  float scopeBlend = smoothstep(0.25, 0.75, fract(scopeBand));
-  vec3 scopeColor = bandLook(scopeIndex, uv, fragmentPixel, base);
-  scopeColor = mix(
-    scopeColor,
-    bandLook(mod(scopeIndex + 1.0, 4.0), uv, fragmentPixel, base),
-    scopeBlend
-  );
-  vec3 color = opticalLook(base);
+  float scopeIndex = mod(floor(uBand + 0.5), 4.0);
+  vec2 scopeUv = uv;
+  vec3 scopeBase = base;
+  if (scopeIndex < 0.5) {
+    vec2 magnifiedPixel = uLens.xy
+      + (fragmentPixel - uLens.xy) / max(1.0, uOpticalZoom);
+    scopeUv = clamp(coverUv(magnifiedPixel), 0.001, 0.999);
+    scopeBase = texture(uTex, scopeUv).rgb;
+  }
+  vec3 scopeColor = bandLook(scopeIndex, scopeUv, fragmentPixel, scopeBase);
+  vec3 color = base;
 
   if (uLensOn > 0.001) {
-    float ringBand = mod(floor(scopeBand + 0.5), 4.0);
+    float ringBand = scopeIndex;
     float distanceToPointer = distance(fragmentPixel, uLens.xy);
     float radius = uLens.z;
     if (distanceToPointer < radius + 3.0) {
@@ -264,7 +308,10 @@ function createContactSheet(
     pointerEvents: "none",
   });
   container.prepend(canvas);
-  let currentBand = options.band ?? "optical";
+  const mode = createPassbandModeController(
+    options.band ?? "optical",
+    options.autoCycleMs !== false,
+  );
   let image: HTMLImageElement | null = null;
   let destroyed = false;
 
@@ -320,9 +367,13 @@ function createContactSheet(
     start: draw,
     pause() {},
     resize: draw,
-    getBand: () => currentBand,
+    getBand: mode.getBand,
+    isAutoCycleEnabled: mode.isAutoCycleEnabled,
+    setAutoCycle(enabled) {
+      mode.setAutoCycle(enabled && options.autoCycleMs !== false);
+    },
     setBand(band) {
-      currentBand = band;
+      mode.selectBand(band);
       options.onBandChange?.(band);
     },
     destroy() {
@@ -363,6 +414,10 @@ export function createPassbandLens(
   });
   if (!gl) return createContactSheet(container, options);
 
+  const configuredAutoCycleMs = options.autoCycleMs === false
+    ? false
+    : (options.autoCycleMs ?? 3_000);
+
   const vertex = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
   const fragment = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
   if (!vertex || !fragment) return createContactSheet(container, options);
@@ -396,6 +451,7 @@ export function createPassbandLens(
     time: gl.getUniformLocation(program, "uTime"),
     lens: gl.getUniformLocation(program, "uLens"),
     lensOn: gl.getUniformLocation(program, "uLensOn"),
+    opticalZoom: gl.getUniformLocation(program, "uOpticalZoom"),
   };
 
   const originalPosition = container.style.position;
@@ -420,9 +476,11 @@ export function createPassbandLens(
   let ready = false;
   let frameId = 0;
   let cycleTimer = 0;
-  let currentBand = options.band ?? "optical";
-  let band = bandIndex(currentBand);
-  let bandTarget = band;
+  const mode = createPassbandModeController(
+    options.band ?? "optical",
+    configuredAutoCycleMs !== false,
+  );
+  let band = bandIndex(mode.getBand());
   let pointerX = 0;
   let pointerY = 0;
   let pointerTargetX = 0;
@@ -465,7 +523,6 @@ export function createPassbandLens(
     const deltaSeconds = Math.min(0.05, Math.max(0.001, (now - previousTime) / 1000));
     previousTime = now;
     elapsed += deltaSeconds;
-    band = damp(band, bandTarget, 6, deltaSeconds);
     pointerX = damp(pointerX, pointerTargetX, 14, deltaSeconds);
     pointerY = damp(pointerY, pointerTargetY, 14, deltaSeconds);
     lensOn = damp(lensOn, lensTarget, 8, deltaSeconds);
@@ -480,6 +537,10 @@ export function createPassbandLens(
       Math.min(canvas.width, canvas.height) * 0.16,
     );
     gl.uniform1f(uniforms.lensOn, lensOn);
+    gl.uniform1f(
+      uniforms.opticalZoom,
+      Math.min(2.5, Math.max(1, options.opticalZoom ?? 1.38)),
+    );
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     frameId = requestAnimationFrame(render);
   };
@@ -513,6 +574,7 @@ export function createPassbandLens(
   const activateFallback = () => {
     if (destroyed || fallback) return;
     ready = false;
+    stopAutoCycle();
     if (frameId) cancelAnimationFrame(frameId);
     frameId = 0;
     lensTarget = 0;
@@ -521,43 +583,57 @@ export function createPassbandLens(
     const { onBandChange: _onBandChange, ...fallbackOptions } = options;
     fallback = createContactSheet(container, {
       ...fallbackOptions,
-      band: currentBand,
+      autoCycleMs: configuredAutoCycleMs,
+      band: mode.getBand(),
       imageSrc: PASSBAND_DEMO_IMAGE,
     });
+    fallback.setAutoCycle(mode.isAutoCycleEnabled());
     if (requested) fallback.start();
   };
-  const setBand = (nextBand: PassbandName) => {
+  const applyBand = (nextBand: PassbandName) => {
     if (replacement) {
-      currentBand = nextBand;
       replacement.setBand(nextBand);
       return;
     }
-    currentBand = nextBand;
-    const nextIndex = bandIndex(nextBand);
-    const normalizedTarget = ((bandTarget % BANDS.length) + BANDS.length) % BANDS.length;
-    bandTarget += (nextIndex - normalizedTarget + BANDS.length) % BANDS.length;
+    band = bandIndex(nextBand);
     options.onBandChange?.(nextBand);
     fallback?.setBand(nextBand);
     schedule();
   };
   const advanceBand = () => {
-    const nextIndex = (bandIndex(currentBand) + 1) % BANDS.length;
-    setBand(BANDS[nextIndex] ?? "optical");
+    applyBand(mode.advanceBand());
   };
   const stopAutoCycle = () => {
-    if (cycleTimer) window.clearInterval(cycleTimer);
+    if (cycleTimer) window.clearTimeout(cycleTimer);
     cycleTimer = 0;
   };
   const startAutoCycle = () => {
     stopAutoCycle();
-    if (options.autoCycleMs === false || options.autoCycleMs === undefined) return;
-    cycleTimer = window.setInterval(advanceBand, Math.max(1_000, options.autoCycleMs));
+    if (
+      configuredAutoCycleMs === false
+      || !mode.isAutoCycleEnabled()
+      || !requested
+      || !ready
+      || !visible
+      || document.hidden
+      || destroyed
+      || retired
+    ) return;
+    cycleTimer = window.setTimeout(() => {
+      cycleTimer = 0;
+      advanceBand();
+      startAutoCycle();
+    }, Math.max(1_000, configuredAutoCycleMs));
   };
   const onVisibility = () => {
-    if (document.hidden && frameId) {
-      cancelAnimationFrame(frameId);
+    if (document.hidden) {
+      stopAutoCycle();
+      if (frameId) cancelAnimationFrame(frameId);
       frameId = 0;
-    } else schedule();
+    } else {
+      startAutoCycle();
+      schedule();
+    }
   };
   const onContextLost = (event: Event) => {
     event.preventDefault();
@@ -584,8 +660,10 @@ export function createPassbandLens(
     container.style.cursor = "";
     replacement = createPassbandLens(container, {
       ...options,
-      band: currentBand,
+      autoCycleMs: configuredAutoCycleMs,
+      band: mode.getBand(),
     });
+    replacement.setAutoCycle(mode.isAutoCycleEnabled());
     if (requested) replacement.start();
   };
 
@@ -599,10 +677,14 @@ export function createPassbandLens(
   resizeObserver.observe(container);
   intersectionObserver = new IntersectionObserver(([entry]) => {
     visible = Boolean(entry?.isIntersecting);
-    if (!visible && frameId) {
-      cancelAnimationFrame(frameId);
+    if (!visible) {
+      stopAutoCycle();
+      if (frameId) cancelAnimationFrame(frameId);
       frameId = 0;
-    } else schedule();
+    } else {
+      startAutoCycle();
+      schedule();
+    }
   }, { rootMargin: "180px 0px" });
   intersectionObserver.observe(container);
   resize();
@@ -623,6 +705,7 @@ export function createPassbandLens(
         gl.uniform1i(uniforms.texture, 0);
         gl.uniform2f(uniforms.textureResolution, image.naturalWidth, image.naturalHeight);
         ready = true;
+        startAutoCycle();
         schedule();
       } catch (error: unknown) {
         console.error(error);
@@ -640,9 +723,11 @@ export function createPassbandLens(
       if (replacement) {
         replacement.start();
       } else {
-        startAutoCycle();
         if (fallback) fallback.start();
-        else schedule();
+        else {
+          startAutoCycle();
+          schedule();
+        }
       }
     },
     pause() {
@@ -655,8 +740,23 @@ export function createPassbandLens(
       container.style.cursor = "";
     },
     resize,
-    getBand: () => replacement?.getBand() ?? currentBand,
-    setBand,
+    getBand: () => replacement?.getBand() ?? mode.getBand(),
+    isAutoCycleEnabled: () => replacement?.isAutoCycleEnabled() ?? mode.isAutoCycleEnabled(),
+    setAutoCycle(enabled) {
+      mode.setAutoCycle(enabled && configuredAutoCycleMs !== false);
+      if (replacement) {
+        replacement.setAutoCycle(mode.isAutoCycleEnabled());
+      } else if (mode.isAutoCycleEnabled()) {
+        startAutoCycle();
+      } else {
+        stopAutoCycle();
+      }
+    },
+    setBand(nextBand) {
+      mode.selectBand(nextBand);
+      stopAutoCycle();
+      applyBand(nextBand);
+    },
     destroy() {
       destroyed = true;
       requested = false;
