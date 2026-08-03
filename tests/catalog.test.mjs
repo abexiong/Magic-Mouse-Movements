@@ -55,6 +55,21 @@ test("repository visuals are present and linked from the README", async () => {
   assert.doesNotMatch(readme, /10 Free Mouse Effects/)
 })
 
+test("Fusion Field includes its halo, ringed trail, and collision physics", async () => {
+  const source = await readFile(
+    new URL("kits/fusion-field/index.ts", repositoryRoot),
+    "utf8",
+  )
+  assert.match(source, /function drawPointerHalo/)
+  assert.match(source, /function drawTrail/)
+  assert.match(source, /haloRadius/)
+  assert.match(source, /digit\.velocityX/)
+  assert.match(source, /prepareScatterTargets/)
+  assert.match(source, /restoreScatterTargets/)
+  assert.match(source, /!frame\.policy\.staticFallback && !scatterPrepared/)
+  assert.match(source, /const boundedX = clamp/)
+})
+
 test("public source contains no private paths or em dashes", async () => {
   const blocked = ["/Users/"]
   const roots = [
