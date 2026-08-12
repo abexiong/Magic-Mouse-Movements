@@ -13,6 +13,13 @@ import {
   supportsCursorPointer,
 } from "./rigid-tow-math.js";
 
+export {
+  createRigidTowAssemblyStory,
+  rigidTowAssemblyAmount,
+  rigidTowAssemblyPhase,
+  RIGID_TOW_ASSEMBLY_POSTER,
+} from "./assembly-story.js";
+
 export const RIGID_TOW_DEMO_MODEL =
   "/magic-mouse-movements/audi-r8-cursor.glb";
 

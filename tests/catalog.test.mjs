@@ -29,6 +29,7 @@ test("every initial movement exports a creator", () => {
     "createConstellationWand",
     "createFusionField",
     "createRigidTowArtifactCursor",
+    "createRigidTowAssemblyStory",
   ]
   for (const creator of creators) assert.equal(typeof publicApi[creator], "function", creator)
 })
@@ -199,7 +200,7 @@ test("Passband Lens can auto-cycle and Constellation Wand ships a dense graph", 
   assert.match(constellation, /pointerDistance \/ 330/)
 })
 
-test("Rigid Tow Artifact Cursor ships its model, replay, credit, and package export", async () => {
+test("Rigid Tow Artifact Cursor ships its model, assembly story, replay, credit, and package export", async () => {
   const packageJson = JSON.parse(await readFile(new URL("package.json", repositoryRoot), "utf8"))
   const notices = await readFile(new URL("THIRD_PARTY_NOTICES.md", repositoryRoot), "utf8")
   const source = await readFile(
@@ -207,10 +208,11 @@ test("Rigid Tow Artifact Cursor ships its model, replay, credit, and package exp
     "utf8",
   )
 
-  assert.equal(packageJson.version, "0.2.0")
+  assert.equal(packageJson.version, "0.3.0")
   assert.ok(packageJson.exports["./rigid-tow-artifact-cursor"])
   assert.equal(packageJson.dependencies.three, "^0.185.1")
   assert.match(source, /createRigidTowArtifactCursor/)
+  assert.match(source, /createRigidTowAssemblyStory/)
   assert.match(source, /readMotionPolicy/)
   assert.match(source, /renderOnCoarsePointer: true/)
   assert.match(notices, /Randomness/)
@@ -224,6 +226,7 @@ test("Rigid Tow Artifact Cursor ships its model, replay, credit, and package exp
   )
   await access(new URL("kits/rigid-tow-artifact-cursor/demo/rigid-tow-artifact-cursor-replay.mp4", repositoryRoot))
   await access(new URL("kits/rigid-tow-artifact-cursor/demo/rigid-tow-artifact-cursor-poster.jpg", repositoryRoot))
+  await access(new URL("kits/rigid-tow-artifact-cursor/demo/audi-r8-assembly-poster.jpg", repositoryRoot))
   await access(new URL("licenses/audi-r8-model-CC-BY-4.0.txt", repositoryRoot))
 })
 

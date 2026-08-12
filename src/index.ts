@@ -23,7 +23,11 @@ export { createMagneticInk } from "../kits/magnetic-ink/index.js";
 export { createConstellationWand } from "../kits/constellation-wand/index.js";
 export { createFusionField } from "../kits/fusion-field/index.js";
 export {
+  createRigidTowAssemblyStory,
   createRigidTowArtifactCursor,
+  rigidTowAssemblyAmount,
+  rigidTowAssemblyPhase,
+  RIGID_TOW_ASSEMBLY_POSTER,
   RIGID_TOW_CURSOR_CONFIG,
   RIGID_TOW_DEMO_MODEL,
 } from "../kits/rigid-tow-artifact-cursor/index.js";

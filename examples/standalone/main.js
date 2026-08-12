@@ -10,6 +10,7 @@ import {
   createSystemAssembly,
   createTerrainScanner,
   createRigidTowArtifactCursor,
+  createRigidTowAssemblyStory,
 } from "../../dist/src/index.js"
 
 const passband = createPassbandLens(document.querySelector("#passband"), {
@@ -20,10 +21,16 @@ const passband = createPassbandLens(document.querySelector("#passband"), {
   },
 })
 
+const rigidTowStage = document.querySelector("#rigid-tow")
+
 const movements = [
   passband,
   createOrbitTrail(document.querySelector("#orbit")),
-  createRigidTowArtifactCursor(document.querySelector("#rigid-tow"), {
+  createRigidTowAssemblyStory(rigidTowStage, {
+    modelUrl: "/kits/rigid-tow-artifact-cursor/demo/audi-r8-cursor.glb",
+    posterUrl: "/kits/rigid-tow-artifact-cursor/demo/audi-r8-assembly-poster.jpg",
+  }),
+  createRigidTowArtifactCursor(rigidTowStage, {
     modelUrl: "/kits/rigid-tow-artifact-cursor/demo/audi-r8-cursor.glb",
   }),
   createSystemAssembly(document.querySelector("#assembly")),

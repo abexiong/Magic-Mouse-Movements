@@ -15,6 +15,10 @@ import {
   supportsCursorPointer,
   towAttachmentPosition,
 } from "../dist/kits/rigid-tow-artifact-cursor/rigid-tow-math.js";
+import {
+  rigidTowAssemblyAmount,
+  rigidTowAssemblyPhase,
+} from "../dist/kits/rigid-tow-artifact-cursor/assembly-story.js";
 
 const eligiblePolicy = {
   finePointer: true,
@@ -60,6 +64,22 @@ const initialBody = () => ({
   velocityY: 0,
   angle: 0,
   angularVelocity: 0,
+});
+
+test("assembly story expands, holds, and returns to the identical assembled state", () => {
+  assert.equal(rigidTowAssemblyAmount(0), 0);
+  assert.equal(rigidTowAssemblyAmount(0.1), 0);
+  assert.ok(rigidTowAssemblyAmount(0.26) > 0.45);
+  assert.equal(rigidTowAssemblyAmount(0.42), 1);
+  assert.equal(rigidTowAssemblyAmount(0.58), 1);
+  assert.ok(rigidTowAssemblyAmount(0.75) > 0 && rigidTowAssemblyAmount(0.75) < 1);
+  assert.equal(rigidTowAssemblyAmount(0.92), 0);
+  assert.equal(rigidTowAssemblyAmount(1), 0);
+  assert.equal(rigidTowAssemblyPhase(0.05), "assembled");
+  assert.equal(rigidTowAssemblyPhase(0.3), "expanding");
+  assert.equal(rigidTowAssemblyPhase(0.5), "exploded");
+  assert.equal(rigidTowAssemblyPhase(0.7), "reassembling");
+  assert.equal(rigidTowAssemblyPhase(1), "assembled");
 });
 
 function assertFiniteBody(body) {
@@ -388,6 +408,10 @@ test("the public kit preserves the fixed joint, fallbacks, cleanup, and attribut
     new URL("../kits/rigid-tow-artifact-cursor/README.md", import.meta.url),
     "utf8",
   );
+  const assemblySource = await readFile(
+    new URL("../kits/rigid-tow-artifact-cursor/assembly-story.js", import.meta.url),
+    "utf8",
+  );
 
   assert.match(source, /const MAX_PARTICLES = 36/);
   assert.match(source, /visibleScale:\s*0\.5/);
@@ -429,4 +453,14 @@ test("the public kit preserves the fixed joint, fallbacks, cleanup, and attribut
   assert.match(readme, /Randomness/);
   assert.match(readme, /CC BY 4\.0/);
   assert.match(readme, /rigid-tow-artifact-cursor-replay\.mp4/);
+  assert.match(readme, /deterministic Three\.js assembly story/);
+  assert.match(assemblySource, /createRigidTowAssemblyStory/);
+  assert.match(assemblySource, /rigidTowAssemblyAmount/);
+  assert.match(assemblySource, /window\.addEventListener\("scroll", handleScroll, \{ passive: true \}\)/);
+  assert.match(assemblySource, /layer\.dataset\.rendering = "false"/);
+  assert.match(assemblySource, /readMotionPolicy\(\{ renderOnCoarsePointer: true \}\)/);
+  assert.match(assemblySource, /get\("motion"\) === "static"/);
+  assert.match(assemblySource, /intersectionObserver\.disconnect\(\)/);
+  assert.match(assemblySource, /resizeObserver\.disconnect\(\)/);
+  assert.doesNotMatch(assemblySource, /preventDefault\s*\(/);
 });

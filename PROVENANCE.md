@@ -32,4 +32,6 @@ Fusion Field preserves the first-party FusionCoding.ai cursor trail, responsive 
 
 Rigid Tow Artifact Cursor preserves the first-party Car Wizard interaction at commit `c08ba74c579329e3bb02d6bf9c87a1566059bb32`. It retains the fixed front-center tow joint, projected model anchor, rigid-body spring and damping solver, local-frame lateral-force cap, rear swing, smoke, shadow, reflection, debugging overlay, and idle renderer shutdown. Abraham explicitly authorized this public adaptation on August 12, 2026. The included Audi R8 derivative remains separately licensed under CC BY 4.0 by Randomness.
 
+The Rigid Tow sample's assembly story is a new deterministic Three.js presentation authored for this repository on August 12, 2026. It expands and returns the actual component meshes in the same CC BY 4.0 Audi GLB. It does not copy the private Car Wizard generated explosion film or its uncleared photographic reference.
+
 The overview and gallery visuals are conceptual project artwork. The Passband feature image is a live browser capture. The interactive engines under `kits/` and the standalone gallery remain the source of truth for actual behavior.
