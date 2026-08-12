@@ -1,6 +1,6 @@
 {
   "name": "magic-mouse-movements",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Complete, accessible cursor interaction kits for websites.",
   "type": "module",
   "license": "MIT",
@@ -14,6 +14,7 @@
     "dist",
     "kits/*/README.md",
     "kits/*/demo/*",
+    "licenses/*",
     "LICENSE",
     "NOTICE.md",
     "PROVENANCE.md",
@@ -67,6 +68,10 @@
     "./fusion-field": {
       "types": "./dist/kits/fusion-field/index.d.ts",
       "import": "./dist/kits/fusion-field/index.js"
+    },
+    "./rigid-tow-artifact-cursor": {
+      "types": "./dist/kits/rigid-tow-artifact-cursor/index.d.ts",
+      "import": "./dist/kits/rigid-tow-artifact-cursor/index.js"
     }
   },
   "scripts": {
@@ -85,7 +90,11 @@
       "optional": true
     }
   },
+  "dependencies": {
+    "three": "^0.185.1"
+  },
   "devDependencies": {
+    "@types/three": "^0.185.0",
     "@types/react": "^19.2.14",
     "react": "^19.2.6",
     "typescript": "^7.0.2"

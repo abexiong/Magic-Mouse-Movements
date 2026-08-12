@@ -12,7 +12,7 @@ Magic Mouse Movements is a collection of reusable cursor interaction kits that c
 
 ## Initial movement concepts
 
-The first catalog includes Orbit Trail, System Assembly, Active Links, Pathfinder, Terrain Scanner, Passband Lens, Layered Reveal, Magnetic Ink, Constellation Wand, and Fusion Field. These names describe generalized interaction behaviors. Abraham explicitly authorized adapting every first-party implementation and media asset needed to reproduce these effects on August 3, 2026. The public kits retain the original interaction contracts while replacing project-specific content with neutral demonstrations where appropriate.
+The catalog includes Orbit Trail, System Assembly, Active Links, Pathfinder, Terrain Scanner, Passband Lens, Layered Reveal, Magnetic Ink, Constellation Wand, Fusion Field, and Rigid Tow Artifact Cursor. These names describe generalized interaction behaviors. Abraham explicitly authorized adapting every first-party implementation and media asset needed to reproduce these effects. The public kits retain the original interaction contracts while replacing project-specific content with neutral demonstrations where appropriate.
 
 ## Visual assets
 
@@ -29,5 +29,7 @@ Orbit Trail, System Assembly, Active Links, and Pathfinder preserve the first-pa
 Magnetic Ink and Constellation Wand preserve first-party interactions created for AbrahamXiong.com, including their particle, stroke, scatter, dust, graph-warp, and selection behaviors. Their public scenes use neutral content.
 
 Fusion Field preserves the first-party FusionCoding.ai cursor trail, responsive vortex geometry, binary displacement, halo, and text-scatter behavior. Its public scene removes FusionCoding.ai product identity.
+
+Rigid Tow Artifact Cursor preserves the first-party Car Wizard interaction at commit `c08ba74c579329e3bb02d6bf9c87a1566059bb32`. It retains the fixed front-center tow joint, projected model anchor, rigid-body spring and damping solver, local-frame lateral-force cap, rear swing, smoke, shadow, reflection, debugging overlay, and idle renderer shutdown. Abraham explicitly authorized this public adaptation on August 12, 2026. The included Audi R8 derivative remains separately licensed under CC BY 4.0 by Randomness.
 
 The overview and gallery visuals are conceptual project artwork. The Passband feature image is a live browser capture. The interactive engines under `kits/` and the standalone gallery remain the source of truth for actual behavior.

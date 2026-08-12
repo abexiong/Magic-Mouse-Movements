@@ -1,0 +1,21 @@
+Audi R8 model attribution and license notice
+
+Title: Audi R8
+Creator: Randomness
+Creator profile: https://sketchfab.com/throwbackthursdaymodels
+Source: https://sketchfab.com/3d-models/audi-r8-0e5c6feed3ff489093e33e686dd8f796
+License: Creative Commons Attribution 4.0 International
+License URL: https://creativecommons.org/licenses/by/4.0/
+
+Required attribution:
+
+Audi R8 by Randomness, available on Sketchfab, licensed under CC BY 4.0.
+
+Changes made by AgenSEO:
+
+Modified from the original through glTF-Transform optimization, Meshopt compression, WebP texture conversion, and quantization for use as the Rigid Tow Artifact Cursor reference model.
+
+The model and its metadata do not imply endorsement by Audi, Randomness, Sketchfab, or Creative Commons.
+
+This notice summarizes the attribution and change disclosure carried with the asset.
+The Creative Commons legal terms at the license URL remain controlling.

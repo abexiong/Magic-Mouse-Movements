@@ -9,6 +9,7 @@ import {
   createPathfinder,
   createSystemAssembly,
   createTerrainScanner,
+  createRigidTowArtifactCursor,
 } from "../../dist/src/index.js"
 
 const passband = createPassbandLens(document.querySelector("#passband"), {
@@ -22,6 +23,9 @@ const passband = createPassbandLens(document.querySelector("#passband"), {
 const movements = [
   passband,
   createOrbitTrail(document.querySelector("#orbit")),
+  createRigidTowArtifactCursor(document.querySelector("#rigid-tow"), {
+    modelUrl: "/kits/rigid-tow-artifact-cursor/demo/audi-r8-cursor.glb",
+  }),
   createSystemAssembly(document.querySelector("#assembly")),
   createActiveLinks(document.querySelector("#links")),
   createPathfinder(document.querySelector("#pathfinder"), { targetSelector: "[data-path-target]" }),

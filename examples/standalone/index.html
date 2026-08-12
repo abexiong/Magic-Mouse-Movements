@@ -4,6 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Magic Mouse Movements</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/node_modules/three/build/three.module.js",
+          "three/addons/": "/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
     <style>
       :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background:#07090d; color:#f2f0e9; }
       * { box-sizing:border-box; }
@@ -24,6 +32,7 @@
       .movement { min-height:480px; }
       .movement-copy { position:relative; z-index:2; padding:22px; pointer-events:none; }
       .movement-stage { position:relative; min-height:380px; border-top:1px solid rgba(255,255,255,.12); background:radial-gradient(circle at 55% 45%,rgba(31,66,133,.3),transparent 45%),#090d14; }
+      #rigid-tow { background:radial-gradient(circle at 52% 42%,rgba(109,124,157,.22),transparent 38%),linear-gradient(145deg,#10151f,#07090d); }
       #pathfinder .target { position:absolute; z-index:2; pointer-events:auto; }
       #pathfinder .target:first-child { top:22%; left:14%; }
       #pathfinder .target:last-child { right:13%; bottom:18%; }
@@ -60,6 +69,7 @@
 
       <div class="catalog">
         <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Storytelling</p><h2>Orbit Trail</h2></div><div class="movement-stage" id="orbit"></div></section>
+        <section class="movement"><div class="movement-copy"><p class="meta">Three.js WebGL · Physics</p><h2>Rigid Tow Artifact Cursor</h2></div><div class="movement-stage" id="rigid-tow"></div></section>
         <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Systems</p><h2>System Assembly</h2></div><div class="movement-stage" id="assembly"></div></section>
         <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Graph</p><h2>Active Links</h2></div><div class="movement-stage" id="links"></div></section>
         <section class="movement"><div class="movement-copy"><p class="meta">Canvas 2D · Navigation</p><h2>Pathfinder</h2></div><div class="movement-stage" id="pathfinder"><button class="target" data-path-target data-pathfinder-label="EVIDENCE / OPEN">Evidence</button><button class="target" data-path-target data-pathfinder-label="ACTION / NEXT">Next action</button></div></section>

@@ -22,3 +22,8 @@ export { createLayeredReveal } from "../kits/layered-reveal/index.js";
 export { createMagneticInk } from "../kits/magnetic-ink/index.js";
 export { createConstellationWand } from "../kits/constellation-wand/index.js";
 export { createFusionField } from "../kits/fusion-field/index.js";
+export {
+  createRigidTowArtifactCursor,
+  RIGID_TOW_CURSOR_CONFIG,
+  RIGID_TOW_DEMO_MODEL,
+} from "../kits/rigid-tow-artifact-cursor/index.js";

@@ -32,7 +32,7 @@ Each movement is a complete, customizable kit. You get the pointer behavior, vis
 | Reveal hidden detail or compare visual states | Passband Lens, Terrain Scanner, Layered Reveal | Maps, technical imagery, before-and-after work, product layers |
 | Guide attention toward relevant content | Pathfinder, Active Links, Orbit Trail | Case studies, chapter navigation, calls to action, related evidence |
 | Make a system or process easier to understand | System Assembly, Constellation Wand | Architecture, capabilities, relationships, workflows |
-| Add expressive motion to a high-impact moment | Magnetic Ink, Fusion Field, Orbit Trail | Portfolio heroes, product launches, campaigns, interactive editorial |
+| Add expressive motion to a high-impact moment | Rigid Tow Artifact Cursor, Magnetic Ink, Fusion Field, Orbit Trail | Portfolio heroes, product launches, campaigns, interactive editorial |
 
 ## Why use a complete kit
 
@@ -50,6 +50,12 @@ Passband Lens is useful when visitors need to inspect one registered image throu
 
 ![Passband Lens previewing a thermal instrument inside an optical view of a photoreal aerial test range](./docs/images/passband-lens-feature.png)
 
+### Rigid Tow Artifact Cursor
+
+Rigid Tow Artifact Cursor is useful when a vehicle, product, mascot, or other oriented artifact should feel physically connected to the pointer. The Audi R8 turns nose-first through one fixed front joint while its center of mass and rear trail naturally.
+
+![Rigid Tow Artifact Cursor replay showing an Audi R8 pulled nose-first through a fixed front attachment](./docs/images/rigid-tow-artifact-cursor-replay.gif)
+
 ### A catalog designed to grow
 
 The catalog covers trails, assembly, active links, pathfinding, scanning, layered reveals, magnetic particles, constellations, and binary fields. New movements can join the same manifest and lifecycle without changing the integration model.
@@ -58,7 +64,7 @@ The catalog covers trails, assembly, active links, pathfinding, scanning, layere
 
 ![A visual gallery of cursor trails, linked nodes, pathfinding, terrain scanning, layered reveals, magnetic particles, constellations, and a binary vortex](./docs/images/movement-gallery.png)
 
-The Passband replay and feature image are browser captures of the live engine. The overview and gallery are conceptual previews. Use the live playground or run the local gallery to interact with every rendering engine.
+The Passband and Rigid Tow replays are browser captures of the live engines. The overview and gallery are conceptual previews. Use the live playground or run the local gallery to interact with every rendering engine.
 
 ## Install
 
@@ -103,6 +109,7 @@ Each folder under [`kits/`](./kits) includes standalone HTML and React examples,
 | Movement | Technology | Useful for |
 |---|---|---|
 | Passband Lens | WebGL2 | Inspecting maps, terrain, products, or technical imagery through registered visual modes |
+| Rigid Tow Artifact Cursor | Three.js WebGL | Towing a vehicle or oriented artifact with fixed-front-joint physics and natural trailing momentum |
 | Orbit Trail | Canvas 2D | Connecting long-form chapters and turning page progression into a visible journey |
 | System Assembly | Canvas 2D | Explaining capabilities, architecture, and how separate parts form a system |
 | Active Links | Canvas 2D | Showing relationships between nearby content, nodes, and destinations |

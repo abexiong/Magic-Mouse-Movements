@@ -10,6 +10,10 @@ const mime = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".map": "application/json; charset=utf-8",
+  ".gif": "image/gif",
+  ".glb": "model/gltf-binary",
+  ".jpg": "image/jpeg",
+  ".mp4": "video/mp4",
 }
 
 createServer(async (request, response) => {

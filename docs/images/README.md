@@ -6,6 +6,7 @@ These images make the Magic Mouse Movements repository easier to understand befo
 
 - `magic-mouse-movements-overview.png`: Tall editorial website concept using the exact project name, an open-ended catalog, Passband Lens, complete kit anatomy, code, and repository actions.
 - `passband-lens-feature.png`: Browser capture of the live WebGL2 movement previewing thermal sensing inside an optical view of the generated aerial terrain plate.
+- `rigid-tow-artifact-cursor-replay.gif`: Browser capture of the live Three.js movement towing the Audi R8 through its fixed front-center joint.
 - `movement-gallery.png`: Text-free modular gallery representing the range of trail, graph, pathfinding, scanning, reveal, particle, constellation, and binary-field behaviors.
 
 ## Generation record

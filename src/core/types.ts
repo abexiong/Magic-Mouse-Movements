@@ -58,7 +58,7 @@ export type MovementManifest = {
   slug: string;
   name: string;
   summary: string;
-  technology: "Canvas 2D" | "WebGL2";
+  technology: "Canvas 2D" | "WebGL2" | "Three.js WebGL";
   categories: readonly string[];
   capabilities: readonly string[];
   accessibility: string;

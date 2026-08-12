@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { createHash } from "node:crypto"
 import { access, readdir, readFile } from "node:fs/promises"
 import { test } from "node:test"
 import { movementCatalog } from "../dist/src/catalog.js"
@@ -27,6 +28,7 @@ test("every initial movement exports a creator", () => {
     "createMagneticInk",
     "createConstellationWand",
     "createFusionField",
+    "createRigidTowArtifactCursor",
   ]
   for (const creator of creators) assert.equal(typeof publicApi[creator], "function", creator)
 })
@@ -48,6 +50,7 @@ test("repository visuals are present and linked from the README", async () => {
     "passband-lens-replay.gif",
     "passband-lens-feature.png",
     "movement-gallery.png",
+    "rigid-tow-artifact-cursor-replay.gif",
   ]
   for (const visual of visuals) {
     await access(new URL(`docs/images/${visual}`, repositoryRoot))
@@ -194,6 +197,34 @@ test("Passband Lens can auto-cycle and Constellation Wand ships a dense graph", 
   assert.match(constellation, /id: "release"/)
   assert.match(constellation, /const dustCount = width < 680 \? 150 : 280/)
   assert.match(constellation, /pointerDistance \/ 330/)
+})
+
+test("Rigid Tow Artifact Cursor ships its model, replay, credit, and package export", async () => {
+  const packageJson = JSON.parse(await readFile(new URL("package.json", repositoryRoot), "utf8"))
+  const notices = await readFile(new URL("THIRD_PARTY_NOTICES.md", repositoryRoot), "utf8")
+  const source = await readFile(
+    new URL("kits/rigid-tow-artifact-cursor/index.js", repositoryRoot),
+    "utf8",
+  )
+
+  assert.equal(packageJson.version, "0.2.0")
+  assert.ok(packageJson.exports["./rigid-tow-artifact-cursor"])
+  assert.equal(packageJson.dependencies.three, "^0.185.1")
+  assert.match(source, /createRigidTowArtifactCursor/)
+  assert.match(source, /readMotionPolicy/)
+  assert.match(source, /renderOnCoarsePointer: true/)
+  assert.match(notices, /Randomness/)
+  assert.match(notices, /Creative Commons Attribution 4\.0/)
+  assert.match(notices, /50553f0d225424d45881a4f3433779a58ea04b55be1104b35951b2ba61cb89de/)
+  const modelUrl = new URL("kits/rigid-tow-artifact-cursor/demo/audi-r8-cursor.glb", repositoryRoot)
+  const model = await readFile(modelUrl)
+  assert.equal(
+    createHash("sha256").update(model).digest("hex"),
+    "50553f0d225424d45881a4f3433779a58ea04b55be1104b35951b2ba61cb89de",
+  )
+  await access(new URL("kits/rigid-tow-artifact-cursor/demo/rigid-tow-artifact-cursor-replay.mp4", repositoryRoot))
+  await access(new URL("kits/rigid-tow-artifact-cursor/demo/rigid-tow-artifact-cursor-poster.jpg", repositoryRoot))
+  await access(new URL("licenses/audi-r8-model-CC-BY-4.0.txt", repositoryRoot))
 })
 
 test("Passband Lens defaults to Auto and manual selection remains locked", () => {

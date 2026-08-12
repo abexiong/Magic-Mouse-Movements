@@ -22,6 +22,16 @@ export const movementCatalog = [
     sourcePath: "kits/orbit-trail",
   },
   {
+    slug: "rigid-tow-artifact-cursor",
+    name: "Rigid Tow Artifact Cursor",
+    summary: "A fixed front-center joint lets the pointer tow an Audi R8 while the center of mass trails, turns, and settles with rigid-body momentum.",
+    technology: "Three.js WebGL",
+    categories: ["vehicle", "physics", "decorative cursor"],
+    capabilities: ["desktop", "touch", "reduced motion", "data saver"],
+    accessibility: "The car is decorative, never intercepts content, preserves native controls, and avoids model loading for reduced motion or data saving.",
+    sourcePath: "kits/rigid-tow-artifact-cursor",
+  },
+  {
     slug: "system-assembly",
     name: "System Assembly",
     summary: "Technical segments assemble around the pointer and respond to nearby capability domains.",
