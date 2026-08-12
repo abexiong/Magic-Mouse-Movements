@@ -54,7 +54,7 @@ Passband Lens is useful when visitors need to inspect one registered image throu
 
 Rigid Tow Artifact Cursor is useful when a vehicle, product, mascot, or other oriented artifact should feel physically connected to the pointer. The Audi R8 turns nose-first through one fixed front joint while its center of mass and rear trail naturally.
 
-![Rigid Tow Artifact Cursor replay showing an Audi R8 pulled nose-first through a fixed front attachment](./docs/images/rigid-tow-artifact-cursor-replay.gif)
+![Rigid Tow Artifact Cursor replay showing an Audi R8 expanding into its real model meshes, reforming, and being pulled nose-first through a fixed front attachment](./docs/images/rigid-tow-artifact-cursor-replay.gif)
 
 ### A catalog designed to grow
 

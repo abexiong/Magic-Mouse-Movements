@@ -4,7 +4,7 @@ Rigid Tow Artifact Cursor lets the pointer tow a small Audi R8 through one fixed
 
 The sample now opens with a deterministic Three.js assembly story built from the same licensed GLB. Its real component meshes expand, hold, and return to the identical assembled vehicle before the cursor demonstrates the fixed-front towing physics. The story previews once and then responds to ordinary page scrolling without intercepting wheel or touch behavior.
 
-<video src="./demo/rigid-tow-artifact-cursor-replay.mp4" controls muted playsinline poster="./demo/rigid-tow-artifact-cursor-poster.jpg" title="Rigid Tow Artifact Cursor demonstration with a mouse towing an Audi R8 through circles, reversals, diagonals, and slow drags"></video>
+<video src="./demo/rigid-tow-artifact-cursor-replay.mp4" controls muted playsinline poster="./demo/rigid-tow-artifact-cursor-poster.jpg" title="Rigid Tow Artifact Cursor demonstration with an Audi R8 expanding into its real model meshes, reforming, and being towed through circles, reversals, diagonals, and slow drags"></video>
 
 [Download the authentic browser replay](./demo/rigid-tow-artifact-cursor-replay.mp4)
 
