@@ -1,6 +1,6 @@
 # Third-party notices
 
-The rendering core and movement engines have no runtime dependencies.
+The Canvas movement engines have no runtime dependencies. The Rigid Tow Artifact Cursor and its assembly story use [Three.js](https://threejs.org/) as an MIT-licensed runtime rendering dependency.
 
 React is an optional peer dependency for the React adapter and remains subject to its own license. TypeScript and React type definitions are development dependencies only.
 
@@ -16,4 +16,4 @@ Repository concept artwork and the Passband Lens aerial terrain plate were gener
 - SHA-256: `50553f0d225424d45881a4f3433779a58ea04b55be1104b35951b2ba61cb89de`
 - Modifications: glTF-Transform optimization, Meshopt compression, WebP texture conversion, and quantization
 
-The model license does not imply endorsement by Audi or Randomness. The full license text is preserved at `licenses/audi-r8-model-CC-BY-4.0.txt`.
+The model license does not imply endorsement by Audi or Randomness. The portable attribution and license notice is preserved at `licenses/audi-r8-model-CC-BY-4.0.txt`; the linked Creative Commons terms remain controlling.
