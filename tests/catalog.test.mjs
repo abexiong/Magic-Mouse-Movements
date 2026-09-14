@@ -210,7 +210,7 @@ test("Rigid Tow Artifact Cursor ships its model, assembly story, replay, credit,
 
   assert.equal(packageJson.version, "0.3.0")
   assert.ok(packageJson.exports["./rigid-tow-artifact-cursor"])
-  assert.equal(packageJson.dependencies.three, "^0.185.1")
+  assert.equal(packageJson.dependencies.three, "^0.186.0")
   assert.match(source, /createRigidTowArtifactCursor/)
   assert.match(source, /createRigidTowAssemblyStory/)
   assert.match(source, /readMotionPolicy/)
